@@ -15,9 +15,8 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
   responseWriter := &ResponseWriter{rw}
   request := &Request{Request: r}
   
-  fmt.Println("Routing: ", r.Method + " " + r.URL.Path)
-  
   // Do routing
+  // TODO: fix bad method
   leaf, wildcardMap := rootRouter.root[HttpMethod(r.Method)].Match(r.URL.Path)
   if leaf == nil {
     fmt.Println("Not Found: ", r.URL.Path)
@@ -43,13 +42,13 @@ func (router *Router) handlePanic(rw *ResponseWriter, req *Request, err interfac
   
   // Find the first router that has an errorHandler
   curRouter := router
-  for curRouter.ErrorHandler == nil && curRouter.parent != nil {
+  for !curRouter.errorHandler.IsValid() && curRouter.parent != nil {
     curRouter = curRouter.parent
   }
   
-  if curRouter.ErrorHandler != nil {
+  if curRouter.errorHandler.IsValid() {
     rw.WriteHeader(http.StatusInternalServerError)
-    curRouter.ErrorHandler(rw, req, err)
+    invoke(curRouter.errorHandler, req.currentContext, []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(err)})
   } else {
     http.Error(rw, "Something went wrong", http.StatusInternalServerError)
   }
@@ -104,12 +103,6 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
   contexts = createContexts(routers)
   req.context = contexts[0]
   
-  fmt.Println("Got contexts: ", contexts)
-  
-  // Pre-make some stuff Values
-  vrw := reflect.ValueOf(rw)
-  vreq := reflect.ValueOf(req)
-  
   // Inputs into next():
   // routers: 1 or more routers in reverse order
   // currentRouterIndex: N-1, ..., 0. If -1, then we're done
@@ -121,12 +114,18 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
   
   var next NextMiddlewareFunc // create self-referential anonymous function
   var nextValue reflect.Value
+  
+  // Pre-make some Values
+  vrw := reflect.ValueOf(rw)
+  vreq := reflect.ValueOf(req)
+  
   next = func() {
     if currentRouterIndex < 0 {
       return
     }
     
     // Find middleware to invoke. The goal of the if statement is to set the middleware variable. If it can't be done, it will be the zero value.
+    // Side effects of this loop: set currentMiddlewareIndex, currentRouterIndex
     var middleware reflect.Value
     if currentMiddlewareIndex < currentMiddlewareLen {
       // It's in bounds? Cool, use it
@@ -160,19 +159,26 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
     
     // Invoke middleware. Reflect on the function to call the context or no-context variant.
     if middleware.IsValid() {
-      mwNumIn := middleware.Type().NumIn()
-      if mwNumIn == 3 {
-        middleware.Call([]reflect.Value{vrw, vreq, nextValue})
-      } else if mwNumIn == 4 {
-        ctx := contexts[currentRouterIndex] // currentRouterIndex shouldn't be -1 b/c the only case it is, is the NumIn==3 case.
-        middleware.Call([]reflect.Value{ctx, vrw, vreq, nextValue})
-      } else {
-        panic("TODO")
+      var ctx reflect.Value
+      if currentRouterIndex >= 0 {
+        ctx := contexts[currentRouterIndex]
+        req.currentContext = ctx
       }
+      invoke(middleware, ctx, []reflect.Value{vrw, vreq, nextValue})
     }
-    
   }
   nextValue = reflect.ValueOf(next)
   
   return next
+}
+
+func invoke(handler reflect.Value, ctx reflect.Value, values []reflect.Value) {
+  handlerType := handler.Type()
+  numIn := handlerType.NumIn()
+  if numIn == len(values) {
+    handler.Call(values)
+  } else {
+    values = append([]reflect.Value{ctx}, values...)
+    handler.Call(values)
+  }
 }

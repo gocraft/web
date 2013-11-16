@@ -1,7 +1,13 @@
 
 TODO:
- - Custom Exception handlers
- - Custom Not Found handlers
+
+ - Exception handlers
+   - reflected types / context aware
+ - refactor all validation methods
+   - good error messaging
+   - proper logging
+ - namespace/context: mandatory on creation of router
+ - Custom Not Found handler
  - Wrap the request with some stuff that gives you a nice view of the params (???)
  - Fix / think about SetNamespace option
  - If contexts are the same between routers, don't blow up

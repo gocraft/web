@@ -35,7 +35,7 @@ type Router struct {
   root map[HttpMethod]*PathNode
   
   // This can can be set on any router. The target's ErrorHandler will be invoked if it exists
-  ErrorHandler func(*ResponseWriter, *Request, interface{})
+  errorHandler reflect.Value
   
   // This can only be set on the root handler, since by virtue of not finding a route, we don't have a target.
   // (That being said, in the future we could investigate namespace matches)
@@ -83,8 +83,9 @@ func (r *Router) NewSubrouter(ctx interface{}) *Router {
 }
 
 func (r *Router) AddMiddleware(fn interface{}) *Router {
-  validateMiddleware(fn, r.contextType)
-  r.middleware = append(r.middleware, reflect.ValueOf(fn))
+  fnv := reflect.ValueOf(fn)
+  validateMiddleware(fnv, r.contextType)
+  r.middleware = append(r.middleware, fnv)
   return r
 }
 
@@ -93,6 +94,12 @@ func (r *Router) SetNamespace(ns string) *Router {
   // TODO: validate pathPrefix
   r.pathPrefix = ns
   return r
+}
+
+func (r *Router) ErrorHandler(fn interface{}) {
+  vfn := reflect.ValueOf(fn)
+  validateErrorHandler(vfn, r.contextType)
+  r.errorHandler = vfn
 }
 
 func (r *Router) Get(path string, fn interface{}) {
@@ -119,13 +126,12 @@ func (r *Router) Patch(path string, fn interface{}) {
 // 
 // 
 func (r *Router) addRoute(method HttpMethod, path string, fn interface{}) {
-  
-  // First, let's validate that fn is the proper type
-  validateHandler(fn, r.contextType)
+  fnv := reflect.ValueOf(fn)
+  validateHandler(fnv, r.contextType)
   
   fullPath := appendPath(r.pathPrefix, path)
   
-  route := &Route{Method: method, Path: fullPath, Handler: reflect.ValueOf(fn), Router: r}
+  route := &Route{Method: method, Path: fullPath, Handler: fnv, Router: r}
   r.routes = append(r.routes, route)
   
   r.root[method].add(fullPath, route)
@@ -159,71 +165,79 @@ func validateContext(ctx interface{}, parentCtxType reflect.Type) {
 
 // Panics unless fn is a proper handler wrt ctxType
 // eg, func(ctx *ctxType, writer, request)
-func validateHandler(fn interface{}, ctxType reflect.Type) {
-  message := "web: handler must be a function with signature TODO"
-  
-  fnType := reflect.TypeOf(fn)
-  
-  if fnType.Kind() != reflect.Func {
-    panic(message)
-  }
-  
-  numIn := fnType.NumIn()
-  numOut := fnType.NumOut()
-  
-  if numIn != 3 || numOut != 0 {
-    panic(message)
-  }
-  
-  if fnType.In(0) != reflect.PtrTo(ctxType) {
-    panic(message)
-  }
-  
+func validateHandler(fnv reflect.Value, ctxType reflect.Type) {
   var req *Request
   var resp *ResponseWriter
-  if fnType.In(1) != reflect.TypeOf(resp) || fnType.In(2) != reflect.TypeOf(req) {
-    panic(message)
+  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp), reflect.TypeOf(req)) {
+    panic("web: handler be a function with signature TODO")
+  }
+}
+
+func validateErrorHandler(fnv reflect.Value, ctxType reflect.Type) {
+  var req *Request
+  var resp *ResponseWriter
+  var wat func() interface{}  // This is weird. I need to get an interface{} reflect.Type; var x interface{}; TypeOf(x) doesn't work, because it returns nil
+  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp), reflect.TypeOf(req), reflect.TypeOf(wat).Out(0)) {
+    panic("web: error handler be a function with signature TODO")
   }
 }
 
 // Either of:
 //    f(*context, *web.ResponseWriter, *web.Request, NextMiddlewareFunc)
 //    f(*web.ResponseWriter, *web.Request, NextMiddlewareFunc)
-func validateMiddleware(fn interface{}, ctxType reflect.Type) {
-  message := "web: middlware must be a function with signature TODO"
-  
-  fnType := reflect.TypeOf(fn)
-  
-  if fnType.Kind() != reflect.Func {
-    panic(message)
-  }
-  
-  numIn := fnType.NumIn()
-  numOut := fnType.NumOut()
-  
-  
-  var i0, i1, i2 int
-  if numOut != 0 {
-    panic(message)
-  }
-  
-  if numIn == 3 {
-    i0, i1, i2 = 0, 1, 2
-  } else if numIn == 4 {
-    if fnType.In(0) != reflect.PtrTo(ctxType) {
-      panic(message)
-    }
-    i0, i1, i2 = 1, 2, 3
-  } else {
-    panic(message)
-  }
-  
+func validateMiddleware(fnv reflect.Value, ctxType reflect.Type) {
   var req *Request
   var resp *ResponseWriter
   var n NextMiddlewareFunc
-  if fnType.In(i0) != reflect.TypeOf(resp) || fnType.In(i1) != reflect.TypeOf(req) || fnType.In(i2) != reflect.TypeOf(n) {
-    panic(message)
+  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp), reflect.TypeOf(req), reflect.TypeOf(n)) {
+    panic("web: middlware must be a function with signature TODO")
   }
+}
+
+// Ensures fnv is a function, that optionally takes a ctxType as the first argument, followed by the specified types. Handles have no return value.
+// Returns true if valid, false otherwise.
+func isValidateHandler(fnv reflect.Value, ctxType reflect.Type, types ...reflect.Type) bool {
+  fnType := fnv.Type()
+  
+  if fnType.Kind() != reflect.Func {
+    fmt.Println("1")
+    return false
+  }
+  
+  typesStartIdx := 0
+  typesLen := len(types)
+  numIn := fnType.NumIn()
+  numOut := fnType.NumOut()
+  
+  if numOut != 0 {
+    fmt.Println("2")
+    return false
+  }
+  
+  if numIn == typesLen {
+    // No context
+  } else if numIn == (typesLen + 1) {
+    // context, types
+    if fnType.In(0) != reflect.PtrTo(ctxType) {
+      fmt.Println("3")
+      return false
+    }
+    typesStartIdx = 1
+  } else {
+    fmt.Println("4")
+    return false
+  }
+  fmt.Println(types)
+  for _, typeArg := range types {
+    fmt.Println("comparing ", fnType.In(typesStartIdx), " vs ", typeArg)
+    if fnType.In(typesStartIdx) != typeArg {
+      fmt.Println("5")
+      return false
+    }
+    typesStartIdx += 1
+  }
+  
+  return true
 }
 
 // Both rootPath/childPath are like "/" and "/users"
