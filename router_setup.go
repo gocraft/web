@@ -64,7 +64,7 @@ func New(ctx interface{}) *Router {
   return r
 }
 
-func (r *Router) NewSubrouter(ctx interface{}) *Router {
+func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
   
   // First, we need to make sure that ctx includes a pointer to the parent context in the first slot
   validateContext(ctx, r.contextType)
@@ -74,7 +74,7 @@ func (r *Router) NewSubrouter(ctx interface{}) *Router {
   r.children = append(r.children, newRouter)
   
   newRouter.contextType = reflect.TypeOf(ctx)
-  newRouter.pathPrefix = r.pathPrefix
+  newRouter.pathPrefix = appendPath(r.pathPrefix, pathPrefix)
   newRouter.root = r.root
   
   fmt.Println("newRouter: ", newRouter) // Keep this to allow fmt
@@ -86,13 +86,6 @@ func (r *Router) AddMiddleware(fn interface{}) *Router {
   fnv := reflect.ValueOf(fn)
   validateMiddleware(fnv, r.contextType)
   r.middleware = append(r.middleware, fnv)
-  return r
-}
-
-func (r *Router) SetNamespace(ns string) *Router {
-  // TODO: do we need to re-eval all the routes ?
-  // TODO: validate pathPrefix
-  r.pathPrefix = ns
   return r
 }
 
