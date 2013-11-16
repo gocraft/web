@@ -1,0 +1,68 @@
+
+TODO:
+ - Custom Exception handlers
+ - Custom Not Found handlers
+ - Wrap the request with some stuff that gives you a nice view of the params (???)
+ - Fix / think about SetNamespace option
+ - If contexts are the same between routers, don't blow up
+ - runner / reloader
+ - benchmarks
+
+
+Handlers:
+
+type MyContext struct {
+  RequestIdentifier string
+  Db *gorp.Db
+}
+
+func (c *MyContext) Signin(w web.ResponseWriter, r *http.Request) {
+  w.Fprintf("<html>...")
+}
+
+type AdminContext struct {
+  *MyContext
+  Admin *User
+}
+
+router = web.New(MyContext{})
+
+router.AddMiddleware((*MyContext).Utf8Sanitizer).
+       AddMiddleware((*MyContext).SetupConnections).
+       AddMiddleware((*MyContext).FindSubdomain)
+
+router.Get("/admin/signin", (*MyContext).Signin)
+router.Post("/admin/signin", (*MyContext).CreateSession)
+
+adminRouter := router.NewSubrouter(AdminContext{})
+adminRouter.Namespace("/admin").                      // All this does is prefix any inner route with "/admin"
+            AddMiddleware((*AdminContext).AdminRequired)
+
+adminRouter.Get("/users", (*AdminContext).UsersListHandler)
+adminRouter.Get("/users/:id(/\d.*/)", (*AdminContext).UsersShowHandler)
+adminRouter.Post("/users", (*AdminContext).UsersCreateHandler)
+
+
+
+
+// Idea
+type TicketsController struct {
+  *MyContext
+}
+adminRouter.Resources("tickets", TicketsController{}, "create", "update")
+adminRouter.JsonResources("tickets", TicketsController{}, "create", "update")
+// -> Assumes:
+func (t *TicketsController) Create() {
+
+}
+// funcs: Create, Update, List, Show, Edit, New, Delete
+
+General routing principles: order doesn't matter. Instead, we construct, a unique non-ambiguous routing tree
+
+
+- This is just a library, not a framework. It handles HTTP Request -> [web library] -> your function.
+                                                                        |-> your middleware/filters/callbacks
+- It does NOT handle view/templating or ORM concerns.
+- It WILL come with some utilities to auto-recompile source on page load, view errors in browser, etc
+- Can have multiple independent routers listening on different hosts / ports
+- 
