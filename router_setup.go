@@ -200,7 +200,6 @@ func isValidateHandler(fnv reflect.Value, ctxType reflect.Type, types ...reflect
   fnType := fnv.Type()
   
   if fnType.Kind() != reflect.Func {
-    fmt.Println("1")
     return false
   }
   
@@ -210,7 +209,6 @@ func isValidateHandler(fnv reflect.Value, ctxType reflect.Type, types ...reflect
   numOut := fnType.NumOut()
   
   if numOut != 0 {
-    fmt.Println("2")
     return false
   }
   
@@ -219,19 +217,15 @@ func isValidateHandler(fnv reflect.Value, ctxType reflect.Type, types ...reflect
   } else if numIn == (typesLen + 1) {
     // context, types
     if fnType.In(0) != reflect.PtrTo(ctxType) {
-      fmt.Println("3")
       return false
     }
     typesStartIdx = 1
   } else {
-    fmt.Println("4")
     return false
   }
-  fmt.Println(types)
+
   for _, typeArg := range types {
-    fmt.Println("comparing ", fnType.In(typesStartIdx), " vs ", typeArg)
     if fnType.In(typesStartIdx) != typeArg {
-      fmt.Println("5")
       return false
     }
     typesStartIdx += 1
