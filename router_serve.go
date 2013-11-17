@@ -161,7 +161,7 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
     if middleware.IsValid() {
       var ctx reflect.Value
       if currentRouterIndex >= 0 {
-        ctx := contexts[currentRouterIndex]
+        ctx = contexts[currentRouterIndex]
         req.currentContext = ctx
       }
       invoke(middleware, ctx, []reflect.Value{vrw, vreq, nextValue})

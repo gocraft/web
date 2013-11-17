@@ -82,7 +82,7 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
   return newRouter
 }
 
-func (r *Router) AddMiddleware(fn interface{}) *Router {
+func (r *Router) Middleware(fn interface{}) *Router {
   fnv := reflect.ValueOf(fn)
   validateMiddleware(fnv, r.contextType)
   r.middleware = append(r.middleware, fnv)

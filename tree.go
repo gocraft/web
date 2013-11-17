@@ -2,7 +2,6 @@ package web
 
 import (
   "strings"
-  "fmt"
 )
 
 type PathNode struct {
@@ -29,7 +28,6 @@ func (pn *PathNode) add(path string, route *Route) {
 }
 
 func (pn *PathNode) addInternal(segments []string, route *Route, wildcards []string) {
-  fmt.Println("addInternal: ", segments, wildcards)
   if len(segments) == 0 {
     if pn.leaf == nil {
       pn.leaf = &PathLeaf{route: route, wildcards: wildcards}
@@ -68,7 +66,6 @@ func (pn *PathNode) Match(path string) (leaf *PathLeaf, wildcards map[string]str
 // Segments is like ["admin", "users"] representing "/admin/users"
 // wildcards are the actual values accumulated when we match on a wildcard.
 func (pn *PathNode) match(segments []string, wildcardValues []string) (leaf *PathLeaf, wildcardMap map[string]string) {
-  fmt.Println("match: entered with ", segments, wildcardValues)
   // Handle leaf nodes:
   if len(segments) == 0 {
     return pn.leaf, makeWildcardMap(pn.leaf, wildcardValues)
