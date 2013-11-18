@@ -19,3 +19,13 @@ func (s *ErrorTestSuite) TestNoHandler(c *C) {
   c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Not Found")
   c.Assert(rw.Code, Equals, http.StatusNotFound)
 }
+
+func (s *ErrorTestSuite) TestBadMethod(c *C) {
+  router := web.New(Context{})
+  
+  rw, req := newTestRequest("POOP", "/this_path_doesnt_exist")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Not Found")
+  c.Assert(rw.Code, Equals, http.StatusNotFound)
+}
+

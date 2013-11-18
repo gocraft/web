@@ -16,8 +16,12 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
   request := &Request{Request: r}
   
   // Do routing
-  // TODO: fix bad method
-  leaf, wildcardMap := rootRouter.root[HttpMethod(r.Method)].Match(r.URL.Path)
+  var leaf *PathLeaf
+  var wildcardMap map[string]string
+  tree, ok := rootRouter.root[HttpMethod(r.Method)]
+  if ok {
+    leaf, wildcardMap = tree.Match(r.URL.Path)
+  }
   if leaf == nil {
     if rootRouter.notFoundHandler != nil {
       rootRouter.notFoundHandler(responseWriter, request)
