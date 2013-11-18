@@ -3,6 +3,7 @@ TODO:
 
  - Exception handlers
    - reflected types / context aware
+ - Question: should i embed a ptr or the actual struct?
  - refactor all validation methods
    - good error messaging
    - proper logging
@@ -13,6 +14,7 @@ TODO:
  - If contexts are the same between routers, don't blow up
  - runner / reloader
  - benchmarks
+
 
 
 Handlers:

@@ -154,39 +154,39 @@ func (s *ErrorTestSuite) TestMultipleErrorHandlers(c *C) {
   c.Assert(rw.Code, Equals, http.StatusInternalServerError)
 }
 
-// func (s *ErrorTestSuite) TestMultipleErrorHandlers2(c *C) {
-//   router := New(Context{})
-//   router.Get("/action", (*Context).Action)
-//   
-//   admin := router.Subrouter(AdminContext{}, "/admin")
-//   admin.ErrorHandler((*AdminContext).ErrorHandler)
-//   admin.Get("/action", (*AdminContext).Action)
-//   
-//   api := router.Subrouter(ApiContext{}, "/api")
-//   api.ErrorHandler((*ApiContext).ErrorHandler)
-//   api.Get("/action", (*ApiContext).Action)
-//   
-//   rw, req := newTestRequest("GET", "/action")
-//   router.ServeHTTP(rw, req)
-//   c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Application Error")
-//   c.Assert(rw.Code, Equals, http.StatusInternalServerError)
-//   
-//   rw, req = newTestRequest("GET", "/admin/action")
-//   router.ServeHTTP(rw, req)
-//   c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Admin Error")
-//   c.Assert(rw.Code, Equals, http.StatusInternalServerError)
-//   
-//   rw, req = newTestRequest("GET", "/admin/action")
-//   router.ServeHTTP(rw, req)
-//   c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Api Error")
-//   c.Assert(rw.Code, Equals, http.StatusInternalServerError)
-// }
+func (s *ErrorTestSuite) TestMultipleErrorHandlers2(c *C) {
+  router := New(Context{})
+  router.Get("/action", (*Context).Action)
+  
+  admin := router.Subrouter(AdminContext{}, "/admin")
+  admin.ErrorHandler((*AdminContext).ErrorHandler)
+  admin.Get("/action", (*AdminContext).Action)
+  
+  api := router.Subrouter(ApiContext{}, "/api")
+  api.ErrorHandler((*ApiContext).ErrorHandler)
+  api.Get("/action", (*ApiContext).Action)
+  
+  rw, req := newTestRequest("GET", "/action")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Application Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+  
+  rw, req = newTestRequest("GET", "/admin/action")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Admin Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+  
+  rw, req = newTestRequest("GET", "/api/action")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Api Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+}
 
 
 
 // Things I want to test:
-// - handler on api, exception on admin
 // - panic in middlware triggers handler of target
+// - if contexts don't change between subrouters, then what.
 
 
 

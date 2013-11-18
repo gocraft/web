@@ -38,18 +38,29 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
   middlewareStack()
 }
 
-func (router *Router) handlePanic(rw *ResponseWriter, req *Request, err interface{}) {
+// This is called against the *target* router
+func (targetRouter *Router) handlePanic(rw *ResponseWriter, req *Request, err interface{}) {
   
   // Find the first router that has an errorHandler
-  curRouter := router
+  // We also need to get the context corresponding to that router.
+  curRouter := targetRouter
+  curContextPtr := req.context
   for !curRouter.errorHandler.IsValid() && curRouter.parent != nil {
     curRouter = curRouter.parent
+    
+    // Need to set curContext to the next context, UNLESS the context is the same type.
+    curContextStruct := reflect.Indirect(curContextPtr)
+    if curRouter.contextType != curContextStruct.Type() {
+      curContextPtr = curContextStruct.Field(0)
+      if reflect.Indirect(curContextPtr).Type() != curRouter.contextType {
+        panic("oshit why")
+      }
+    }
   }
   
   if curRouter.errorHandler.IsValid() {
-    fmt.Println("HERE! ", curRouter.errorHandler, req.currentContext)
     rw.WriteHeader(http.StatusInternalServerError)
-    invoke(curRouter.errorHandler, req.currentContext, []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(err)})
+    invoke(curRouter.errorHandler, curContextPtr, []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(err)})
   } else {
     http.Error(rw, DefaultPanicResponse, http.StatusInternalServerError)
   }
@@ -64,7 +75,6 @@ func (router *Router) handlePanic(rw *ResponseWriter, req *Request, err interfac
 
 // This is the last middleware. It will just invoke the action
 func RouteInvokingMiddleware(rw *ResponseWriter, req *Request, next NextMiddlewareFunc) {
-  req.currentContext = req.context
   req.route.Handler.Call([]reflect.Value{req.context, reflect.ValueOf(rw), reflect.ValueOf(req)})
 }
 
@@ -104,7 +114,6 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
   var contexts []reflect.Value
   contexts = createContexts(routers)
   req.context = contexts[0]
-  req.currentContext = contexts[len(contexts) - 1]
   
   // Inputs into next():
   // routers: 1 or more routers in reverse order
@@ -165,7 +174,6 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
       var ctx reflect.Value
       if currentRouterIndex >= 0 {
         ctx = contexts[currentRouterIndex]
-        req.currentContext = ctx
       }
       invoke(middleware, ctx, []reflect.Value{vrw, vreq, nextValue})
     }

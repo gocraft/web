@@ -15,10 +15,6 @@ type Request struct {
   // The actual route that got invoked
   route *Route
   
-  // The current context. Updated as we move down the middleware stack.
-  // By the time the route's action is invoked, currentContext == context
-  currentContext reflect.Value
-  
   // The target context corresponding to the route.
-  context reflect.Value //TODO: targetContext
+  context reflect.Value
 }
