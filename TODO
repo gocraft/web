@@ -1,8 +1,8 @@
 
 TODO:
 
- - If contexts are the same between routers, don't blow up
  - Some basic tests for routing, middleware, etc
+ - If contexts are the same between routers, don't blow up
  - rejigger serving structure:
    - Run root middleware first, THEN do routing.
  - 500 handling:
@@ -14,6 +14,11 @@ TODO:
    - good error messaging
    - proper logging
  - benchmarks
+ - change reponsewriter to be an interface
+ - change middleware to pass rw, r into next middleware
+ - do further routing tests. Test tree.go. Wildcards.
+ 
+ - refactor tests to use assertResponse
 
  - ??? Unsure thoughts
    - Wrap the request with some stuff that gives you a nice view of the params

@@ -7,6 +7,7 @@ import (
   "net/http"
   "net/http/httptest"
   "fmt"
+  "strings"
 )
 
 //
@@ -25,6 +26,11 @@ func newTestRequest(method, path string) (*httptest.ResponseRecorder, *http.Requ
   recorder := httptest.NewRecorder()
 
   return recorder, request
+}
+
+func assertResponse(c *C, rr *httptest.ResponseRecorder, body string, code int) {
+  c.Assert(strings.TrimSpace(string(rr.Body.Bytes())), Equals, body)
+  c.Assert(rr.Code, Equals, code)
 }
 
 //
