@@ -3,7 +3,7 @@ package web
 import (
   "reflect"
   "net/http"
-  "fmt"
+  // "fmt"
   "runtime"
 )
 
@@ -19,7 +19,11 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
   // TODO: fix bad method
   leaf, wildcardMap := rootRouter.root[HttpMethod(r.Method)].Match(r.URL.Path)
   if leaf == nil {
-    fmt.Println("Not Found: ", r.URL.Path)
+    if rootRouter.notFoundHandler != nil {
+      rootRouter.notFoundHandler(responseWriter, request)
+    } else {
+      http.Error(rw, DefaultNotFoundResponse, http.StatusNotFound)
+    }
     return
   }
   
@@ -194,6 +198,7 @@ func invoke(handler reflect.Value, ctx reflect.Value, values []reflect.Value) {
   }
 }
 
+var DefaultNotFoundResponse string = "Not Found"
 var DefaultPanicResponse string = "Application Error"
 
 

@@ -39,7 +39,7 @@ type Router struct {
   
   // This can only be set on the root handler, since by virtue of not finding a route, we don't have a target.
   // (That being said, in the future we could investigate namespace matches)
-  NotFoundHandler func(*ResponseWriter, *Request)
+  notFoundHandler func(*ResponseWriter, *Request)
 }
 
 type Route struct {

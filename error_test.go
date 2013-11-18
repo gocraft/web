@@ -1,89 +1,26 @@
-package web
+package web_test
 
 import (
+  "github.com/cypriss/mars_web"
   . "launchpad.net/gocheck"
-  "testing"
   "fmt"
   "net/http"
-  "net/http/httptest"
   "strings"
 )
 
-//
-// gocheck: hook into "go test"
-//
-func Test(t *testing.T) { TestingT(t) }
-type ErrorTestSuite struct {
-}
+type ErrorTestSuite struct {}
 var _ = Suite(&ErrorTestSuite{})
 
-func newTestRequest(method, path string) (*httptest.ResponseRecorder, *http.Request) {
-  request, _ := http.NewRequest(method, path, nil)
-  recorder := httptest.NewRecorder()
-
-  return recorder, request
-}
-
-type Context struct {}
-
-type AdminContext struct {
-  *Context
-}
-
-type ApiContext struct {
-  *Context
-}
-
-type SiteContext struct {
-  *Context
-}
-
-type TicketsContext struct {
-  *AdminContext
-}
-
-func (c *Context) ErrorHandler(w *ResponseWriter, r *Request, err interface{}) {
-  fmt.Fprintf(w, "My Error")
-}
-
-func (c *Context) Action(w *ResponseWriter, r *Request) {
-  var x, y int
-  fmt.Fprintln(w, x / y)
-}
-
-func (c *AdminContext) ErrorHandler(w *ResponseWriter, r *Request, err interface{}) {
-  fmt.Fprintf(w, "Admin Error")
-}
-
-func (c *AdminContext) Action(w *ResponseWriter, r *Request) {
-  var x, y int
-  fmt.Fprintln(w, x / y)
-}
-
-func (c *ApiContext) ErrorHandler(w *ResponseWriter, r *Request, err interface{}) {
-  fmt.Fprintf(w, "Api Error")
-}
-
-func (c *ApiContext) Action(w *ResponseWriter, r *Request) {
-  var x, y int
-  fmt.Fprintln(w, x / y)
-}
-
-func (c *TicketsContext) Action(w *ResponseWriter, r *Request) {
-  var x, y int
-  fmt.Fprintln(w, x / y)
-}
-
-func ErrorHandlerWithNoContext(w *ResponseWriter, r *Request, err interface{}) {
+func ErrorHandlerWithNoContext(w *web.ResponseWriter, r *web.Request, err interface{}) {
   fmt.Fprintf(w, "Contextless Error")
 }
 
 func (s *ErrorTestSuite) TestNoErorHandler(c *C) {
-  router := New(Context{})
-  router.Get("/action", (*Context).Action)
+  router := web.New(Context{})
+  router.Get("/action", (*Context).ErrorAction)
   
   admin := router.Subrouter(AdminContext{}, "/admin")
-  admin.Get("/action", (*AdminContext).Action)
+  admin.Get("/action", (*AdminContext).ErrorAction)
   
   rw, req := newTestRequest("GET", "/action")
   router.ServeHTTP(rw, req)
@@ -97,12 +34,12 @@ func (s *ErrorTestSuite) TestNoErorHandler(c *C) {
 }
 
 func (s *ErrorTestSuite) TestHandlerOnRoot(c *C) {
-  router := New(Context{})
+  router := web.New(Context{})
   router.ErrorHandler((*Context).ErrorHandler)
-  router.Get("/action", (*Context).Action)
+  router.Get("/action", (*Context).ErrorAction)
   
   admin := router.Subrouter(AdminContext{}, "/admin")
-  admin.Get("/action", (*AdminContext).Action)
+  admin.Get("/action", (*AdminContext).ErrorAction)
   
   rw, req := newTestRequest("GET", "/action")
   router.ServeHTTP(rw, req)
@@ -116,12 +53,12 @@ func (s *ErrorTestSuite) TestHandlerOnRoot(c *C) {
 }
 
 func (s *ErrorTestSuite) TestContextlessError(c *C) {
-  router := New(Context{})
+  router := web.New(Context{})
   router.ErrorHandler(ErrorHandlerWithNoContext)
-  router.Get("/action", (*Context).Action)
+  router.Get("/action", (*Context).ErrorAction)
   
   admin := router.Subrouter(AdminContext{}, "/admin")
-  admin.Get("/action", (*AdminContext).Action)
+  admin.Get("/action", (*AdminContext).ErrorAction)
   
   rw, req := newTestRequest("GET", "/action")
   router.ServeHTTP(rw, req)
@@ -135,13 +72,13 @@ func (s *ErrorTestSuite) TestContextlessError(c *C) {
 }
 
 func (s *ErrorTestSuite) TestMultipleErrorHandlers(c *C) {
-  router := New(Context{})
+  router := web.New(Context{})
   router.ErrorHandler((*Context).ErrorHandler)
-  router.Get("/action", (*Context).Action)
+  router.Get("/action", (*Context).ErrorAction)
   
   admin := router.Subrouter(AdminContext{}, "/admin")
   admin.ErrorHandler((*AdminContext).ErrorHandler)
-  admin.Get("/action", (*AdminContext).Action)
+  admin.Get("/action", (*AdminContext).ErrorAction)
   
   rw, req := newTestRequest("GET", "/action")
   router.ServeHTTP(rw, req)
@@ -155,16 +92,16 @@ func (s *ErrorTestSuite) TestMultipleErrorHandlers(c *C) {
 }
 
 func (s *ErrorTestSuite) TestMultipleErrorHandlers2(c *C) {
-  router := New(Context{})
-  router.Get("/action", (*Context).Action)
+  router := web.New(Context{})
+  router.Get("/action", (*Context).ErrorAction)
   
   admin := router.Subrouter(AdminContext{}, "/admin")
   admin.ErrorHandler((*AdminContext).ErrorHandler)
-  admin.Get("/action", (*AdminContext).Action)
+  admin.Get("/action", (*AdminContext).ErrorAction)
   
   api := router.Subrouter(ApiContext{}, "/api")
   api.ErrorHandler((*ApiContext).ErrorHandler)
-  api.Get("/action", (*ApiContext).Action)
+  api.Get("/action", (*ApiContext).ErrorAction)
   
   rw, req := newTestRequest("GET", "/action")
   router.ServeHTTP(rw, req)
