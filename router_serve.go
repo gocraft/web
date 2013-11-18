@@ -47,10 +47,11 @@ func (router *Router) handlePanic(rw *ResponseWriter, req *Request, err interfac
   }
   
   if curRouter.errorHandler.IsValid() {
+    fmt.Println("HERE! ", curRouter.errorHandler, req.currentContext)
     rw.WriteHeader(http.StatusInternalServerError)
     invoke(curRouter.errorHandler, req.currentContext, []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(err)})
   } else {
-    http.Error(rw, "Something went wrong", http.StatusInternalServerError)
+    http.Error(rw, DefaultPanicResponse, http.StatusInternalServerError)
   }
   
   const size = 4096
@@ -63,6 +64,7 @@ func (router *Router) handlePanic(rw *ResponseWriter, req *Request, err interfac
 
 // This is the last middleware. It will just invoke the action
 func RouteInvokingMiddleware(rw *ResponseWriter, req *Request, next NextMiddlewareFunc) {
+  req.currentContext = req.context
   req.route.Handler.Call([]reflect.Value{req.context, reflect.ValueOf(rw), reflect.ValueOf(req)})
 }
 
@@ -102,6 +104,7 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
   var contexts []reflect.Value
   contexts = createContexts(routers)
   req.context = contexts[0]
+  req.currentContext = contexts[len(contexts) - 1]
   
   // Inputs into next():
   // routers: 1 or more routers in reverse order
@@ -182,3 +185,7 @@ func invoke(handler reflect.Value, ctx reflect.Value, values []reflect.Value) {
     handler.Call(values)
   }
 }
+
+var DefaultPanicResponse string = "Application Error"
+
+

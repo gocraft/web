@@ -6,6 +6,7 @@ import (
   "fmt"
   "net/http"
   "net/http/httptest"
+  "strings"
 )
 
 //
@@ -23,72 +24,169 @@ func newTestRequest(method, path string) (*httptest.ResponseRecorder, *http.Requ
   return recorder, request
 }
 
-type Context struct {
-  A int
-}
+type Context struct {}
 
 type AdminContext struct {
   *Context
-  B int
 }
 
 type ApiContext struct {
   *Context
-  C int
+}
+
+type SiteContext struct {
+  *Context
 }
 
 type TicketsContext struct {
   *AdminContext
 }
 
-func (c *Context) SetA(w *ResponseWriter, r *Request, next NextMiddlewareFunc) {
-  c.A = 1
-  next()
+func (c *Context) ErrorHandler(w *ResponseWriter, r *Request, err interface{}) {
+  fmt.Fprintf(w, "My Error")
 }
 
-func (c *AdminContext) SetB(w *ResponseWriter, r *Request, next NextMiddlewareFunc) {
-  c.B = 10
-  next()
+func (c *Context) Action(w *ResponseWriter, r *Request) {
+  var x, y int
+  fmt.Fprintln(w, x / y)
 }
 
-
-func (c *ApiContext) SetC(w *ResponseWriter, r *Request, next NextMiddlewareFunc) {
-  c.C = 100
-  next()
+func (c *AdminContext) ErrorHandler(w *ResponseWriter, r *Request, err interface{}) {
+  fmt.Fprintf(w, "Admin Error")
 }
 
-func (c *TicketsContext) Index(w *ResponseWriter, r *Request) {
-  fmt.Fprintf(w, "poopin")
+func (c *AdminContext) Action(w *ResponseWriter, r *Request) {
+  var x, y int
+  fmt.Fprintln(w, x / y)
+}
+
+func (c *ApiContext) ErrorHandler(w *ResponseWriter, r *Request, err interface{}) {
+  fmt.Fprintf(w, "Api Error")
+}
+
+func (c *ApiContext) Action(w *ResponseWriter, r *Request) {
+  var x, y int
+  fmt.Fprintln(w, x / y)
+}
+
+func (c *TicketsContext) Action(w *ResponseWriter, r *Request) {
+  var x, y int
+  fmt.Fprintln(w, x / y)
+}
+
+func ErrorHandlerWithNoContext(w *ResponseWriter, r *Request, err interface{}) {
+  fmt.Fprintf(w, "Contextless Error")
 }
 
 func (s *ErrorTestSuite) TestNoErorHandler(c *C) {
-  fmt.Println("here")
-  
   router := New(Context{})
-  router.Middleware((*Context).SetA)
+  router.Get("/action", (*Context).Action)
   
-  apiRouter := router.Subrouter(ApiContext{}, "/api")
-  apiRouter.Middleware((*ApiContext).SetC)
+  admin := router.Subrouter(AdminContext{}, "/admin")
+  admin.Get("/action", (*AdminContext).Action)
   
-  adminRouter := router.Subrouter(AdminContext{}, "/admin")
-  adminRouter.Middleware((*AdminContext).SetB)
-  
-  ticketsRouter := adminRouter.Subrouter(TicketsContext{}, "/tickets")
-  ticketsRouter.Get("/index", (*TicketsContext).Index)
-  
-  fmt.Println(ticketsRouter)
-  
-  rw, req := newTestRequest("GET", "/admin/tickets/index")
+  rw, req := newTestRequest("GET", "/action")
   router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Application Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
   
-  fmt.Printf(string(rw.Body.Bytes()))
+  rw, req = newTestRequest("GET", "/admin/action")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Application Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
 }
 
+func (s *ErrorTestSuite) TestHandlerOnRoot(c *C) {
+  router := New(Context{})
+  router.ErrorHandler((*Context).ErrorHandler)
+  router.Get("/action", (*Context).Action)
+  
+  admin := router.Subrouter(AdminContext{}, "/admin")
+  admin.Get("/action", (*AdminContext).Action)
+  
+  rw, req := newTestRequest("GET", "/action")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "My Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+  
+  rw, req = newTestRequest("GET", "/admin/action")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "My Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+}
+
+func (s *ErrorTestSuite) TestContextlessError(c *C) {
+  router := New(Context{})
+  router.ErrorHandler(ErrorHandlerWithNoContext)
+  router.Get("/action", (*Context).Action)
+  
+  admin := router.Subrouter(AdminContext{}, "/admin")
+  admin.Get("/action", (*AdminContext).Action)
+  
+  rw, req := newTestRequest("GET", "/action")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Contextless Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+  
+  rw, req = newTestRequest("GET", "/admin/action")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Contextless Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+}
+
+func (s *ErrorTestSuite) TestMultipleErrorHandlers(c *C) {
+  router := New(Context{})
+  router.ErrorHandler((*Context).ErrorHandler)
+  router.Get("/action", (*Context).Action)
+  
+  admin := router.Subrouter(AdminContext{}, "/admin")
+  admin.ErrorHandler((*AdminContext).ErrorHandler)
+  admin.Get("/action", (*AdminContext).Action)
+  
+  rw, req := newTestRequest("GET", "/action")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "My Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+  
+  rw, req = newTestRequest("GET", "/admin/action")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Admin Error")
+  c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+}
+
+// func (s *ErrorTestSuite) TestMultipleErrorHandlers2(c *C) {
+//   router := New(Context{})
+//   router.Get("/action", (*Context).Action)
+//   
+//   admin := router.Subrouter(AdminContext{}, "/admin")
+//   admin.ErrorHandler((*AdminContext).ErrorHandler)
+//   admin.Get("/action", (*AdminContext).Action)
+//   
+//   api := router.Subrouter(ApiContext{}, "/api")
+//   api.ErrorHandler((*ApiContext).ErrorHandler)
+//   api.Get("/action", (*ApiContext).Action)
+//   
+//   rw, req := newTestRequest("GET", "/action")
+//   router.ServeHTTP(rw, req)
+//   c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Application Error")
+//   c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+//   
+//   rw, req = newTestRequest("GET", "/admin/action")
+//   router.ServeHTTP(rw, req)
+//   c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Admin Error")
+//   c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+//   
+//   rw, req = newTestRequest("GET", "/admin/action")
+//   router.ServeHTTP(rw, req)
+//   c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Api Error")
+//   c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+// }
+
+
+
 // Things I want to test:
-// - no handler {r, l}
-// - handler on root {r, l}
-// - handler on root AND api, exception on {r, api}
 // - handler on api, exception on admin
+// - panic in middlware triggers handler of target
 
 
 
