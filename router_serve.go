@@ -24,6 +24,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
   }
   if leaf == nil {
     if rootRouter.notFoundHandler != nil {
+      rw.WriteHeader(http.StatusNotFound)
       rootRouter.notFoundHandler(responseWriter, request)
     } else {
       http.Error(rw, DefaultNotFoundResponse, http.StatusNotFound)

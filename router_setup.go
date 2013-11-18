@@ -39,7 +39,7 @@ type Router struct {
   
   // This can only be set on the root handler, since by virtue of not finding a route, we don't have a target.
   // (That being said, in the future we could investigate namespace matches)
-  notFoundHandler func(*ResponseWriter, *Request)
+  notFoundHandler NotFoundFunc
 }
 
 type Route struct {
@@ -50,6 +50,7 @@ type Route struct {
 }
 
 type NextMiddlewareFunc func()
+type NotFoundFunc func(*ResponseWriter, *Request)
 
 func New(ctx interface{}) *Router {
   validateContext(ctx, nil)
@@ -93,6 +94,13 @@ func (r *Router) ErrorHandler(fn interface{}) {
   vfn := reflect.ValueOf(fn)
   validateErrorHandler(vfn, r.contextType)
   r.errorHandler = vfn
+}
+
+func (r *Router) NotFoundHandler(fn NotFoundFunc) {
+  if r.parent != nil {
+    panic("You can only set a NotFoundHandler on the root router.")
+  }
+  r.notFoundHandler = fn
 }
 
 func (r *Router) Get(path string, fn interface{}) {
