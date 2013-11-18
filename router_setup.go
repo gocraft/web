@@ -195,7 +195,7 @@ func validateMiddleware(fnv reflect.Value, ctxType reflect.Type) {
   }
 }
 
-// Ensures fnv is a function, that optionally takes a ctxType as the first argument, followed by the specified types. Handles have no return value.
+// Ensures fnv is a function, that optionally takes a *ctxType as the first argument, followed by the specified types. Handlers have no return value.
 // Returns true if valid, false otherwise.
 func isValidateHandler(fnv reflect.Value, ctxType reflect.Type, types ...reflect.Type) bool {
   fnType := fnv.Type()

@@ -1,23 +1,22 @@
 
 TODO:
 
+ - If contexts are the same between routers, don't blow up
+ - Some basic tests for routing, middleware, etc
+ - rejigger serving structure:
+   - Run root middleware first, THEN do routing.
  - 500 handling:
    - write test for panic in middleware
    - write test for panics when contexts are the same between routers
  - Question: should i embed a ptr or the actual struct?
    - Not until I start benchmarking and pprofing
- - not found handling
-   - write tests
  - refactor all validation methods
    - good error messaging
    - proper logging
- - namespace/context: mandatory on creation of router
- - Wrap the request with some stuff that gives you a nice view of the params (???)
- - Fix / think about SetNamespace option
- - If contexts are the same between routers, don't blow up
- - runner / reloader
  - benchmarks
 
+ - ??? Unsure thoughts
+   - Wrap the request with some stuff that gives you a nice view of the params
 
 
 Handlers:
