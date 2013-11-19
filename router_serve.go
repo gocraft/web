@@ -3,11 +3,11 @@ package web
 import (
   "reflect"
   "net/http"
-  // "fmt"
+  "fmt"
   "runtime"
 )
 
-func (rootRouter *Router) ServeHTTPV2(rw http.ResponseWriter, r *http.Request) {
+func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
   
   // Wrap the request and writer.
   responseWriter := &ResponseWriter{rw}
@@ -24,19 +24,11 @@ func (rootRouter *Router) ServeHTTPV2(rw http.ResponseWriter, r *http.Request) {
   middlewareStack()
 }
 
-// Anatomy of a request:
-// - Wrap reponse/req
-// - Create root context
-// - Run root middleware
-// - Do routing middleware. Calculate route
-// - Create other contexts, tie that up
-// - Run other middleware towards target router
-// - RouteInvokingMiddleware
-
 // r should be the root router
 func (r *Router) MiddlewareStackV2(rw *ResponseWriter, req *Request) NextMiddlewareFunc {
+  fmt.Println("YAY ENTERING MY SHIT")
   // Where are we in the stack
-  routers := []Router{r}
+  routers := []*Router{r}
   contexts := []reflect.Value{reflect.New(r.contextType)}
   currentMiddlewareIndex := 0
   currentRouterIndex := 0
@@ -49,7 +41,7 @@ func (r *Router) MiddlewareStackV2(rw *ResponseWriter, req *Request) NextMiddlew
   var next NextMiddlewareFunc // create self-referential anonymous function
   var nextValue reflect.Value
   next = func() {
-    if currentRouterIndex == len(routers) {
+    if currentRouterIndex >= len(routers) {
       return
     }
     
@@ -66,15 +58,16 @@ func (r *Router) MiddlewareStackV2(rw *ResponseWriter, req *Request) NextMiddlew
         // We could also 404 at this point: if so, run NotFound handlers and return.
         route, wildcardMap := calculateRoute(r, req)
         if route == nil {
-          // 404 baby
+          panic("404")
           return
         }
         
         req.route = route
         req.UrlVariables = wildcardMap
         
-        routers = append(routers, additionalRouters(route)...)
-        contexts = append(contexts, additionalContexts(contexts[0], routers))
+        routers = routersFor(route)
+        fmt.Println("Ok I got all the routers dog: ", routers)
+        contexts = append(contexts, additionalContexts(contexts[0], routers)...)
       }
       
       currentMiddlewareIndex = 0
@@ -87,10 +80,11 @@ func (r *Router) MiddlewareStackV2(rw *ResponseWriter, req *Request) NextMiddlew
         }
         currentRouterIndex += 1
       }
-      if currentRouterIndex <= routersLen {
+      if currentRouterIndex < routersLen {
         middleware = routers[currentRouterIndex].middleware[currentMiddlewareIndex]
       } else {
-        // Invoke the action!
+        // We're done! invoke the action
+        invoke(req.route.Handler, contexts[len(contexts) - 1], []reflect.Value{vrw, vreq})
       }
     }
     
@@ -106,9 +100,42 @@ func (r *Router) MiddlewareStackV2(rw *ResponseWriter, req *Request) NextMiddlew
   return next
 }
 
-// Returns a pointer to the context of the router
-func createRootContext(rootRouter *Router) reflect.Value {
-  return 
+func calculateRoute(rootRouter *Router, req *Request) (*Route, map[string]string) {
+  var leaf *PathLeaf
+  var wildcardMap map[string]string
+  tree, ok := rootRouter.root[HttpMethod(req.Method)]
+  if ok {
+    leaf, wildcardMap = tree.Match(req.URL.Path)
+  }
+  if leaf == nil {
+    return nil, nil
+  } else {
+    return leaf.route, wildcardMap
+  }
+}
+
+func routersFor(route *Route) []*Router {
+  var routers []*Router
+  curRouter := route.Router
+  for curRouter != nil {
+    routers = append(routers, curRouter)
+    curRouter = curRouter.parent
+  }
+  
+  // Reverse the slice
+  s := 0
+  e := len(routers) - 1
+  for s < e {
+    routers[s], routers[e] = routers[e], routers[s]
+    s += 1
+    e -= 1
+  }
+  
+  return routers
+}
+
+func additionalContexts(rootContext reflect.Value, routers []*Router) []reflect.Value {
+  return nil 
 }
 
 
@@ -121,7 +148,7 @@ func createRootContext(rootRouter *Router) reflect.Value {
 
 // This is the main entry point for a request from the built-in Go http library.
 // router should be the root router.
-func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (rootRouter *Router) ServeHTTPV1(rw http.ResponseWriter, r *http.Request) {
   
   // Wrap the request and writer.
   responseWriter := &ResponseWriter{rw}
