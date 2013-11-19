@@ -1,9 +1,8 @@
 
 TODO:
 
+ - Proper logging of all requests, including 404's. Response code recording in the response object.
  - If contexts are the same between routers, don't blow up
- - rejigger serving structure:
-   - Run root middleware first, THEN do routing.
  - 500 handling:
    - write test for panic in middleware
    - write test for panics when contexts are the same between routers
