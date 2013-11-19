@@ -55,7 +55,7 @@ func main() {
   
   adminRouter := router.Subrouter(AdminContext{}, "/admin")
   
-  //adminRouter.Get("/users", (*AdminContext).UsersList)
+  adminRouter.Get("/users", (*AdminContext).UsersList)
   adminRouter.Get("/forums/:forum_id/suggestions/:suggestion_id", (*AdminContext).SuggestionView)
   
   fmt.Println("ok: ", adminRouter)
