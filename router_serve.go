@@ -7,6 +7,118 @@ import (
   "runtime"
 )
 
+func (rootRouter *Router) ServeHTTPV2(rw http.ResponseWriter, r *http.Request) {
+  
+  // Wrap the request and writer.
+  responseWriter := &ResponseWriter{rw}
+  request := &Request{Request: r}
+  
+  // Handle errors
+  defer func() {
+    if recovered := recover(); recovered != nil {
+      rootRouter.handlePanic(responseWriter, request, recovered) // TODO: that's wrong (used to be route.Router)
+    }
+  }()
+  
+  middlewareStack := rootRouter.MiddlewareStackV2(responseWriter, request)
+  middlewareStack()
+}
+
+// Anatomy of a request:
+// - Wrap reponse/req
+// - Create root context
+// - Run root middleware
+// - Do routing middleware. Calculate route
+// - Create other contexts, tie that up
+// - Run other middleware towards target router
+// - RouteInvokingMiddleware
+
+// r should be the root router
+func (r *Router) MiddlewareStackV2(rw *ResponseWriter, req *Request) NextMiddlewareFunc {
+  // Where are we in the stack
+  routers := []Router{r}
+  contexts := []reflect.Value{reflect.New(r.contextType)}
+  currentMiddlewareIndex := 0
+  currentRouterIndex := 0
+  currentMiddlewareLen := len(r.middleware)
+  
+  // Pre-make some Values
+  vrw := reflect.ValueOf(rw)
+  vreq := reflect.ValueOf(req)
+  
+  var next NextMiddlewareFunc // create self-referential anonymous function
+  var nextValue reflect.Value
+  next = func() {
+    if currentRouterIndex == len(routers) {
+      return
+    }
+    
+    // Find middleware to invoke. The goal of this block is to set the middleware variable. If it can't be done, it will be the zero value.
+    // Side effects of this loop: set currentMiddlewareIndex, currentRouterIndex, currentMiddlewareLen
+    var middleware reflect.Value
+    if currentMiddlewareIndex < currentMiddlewareLen {
+      middleware = routers[currentRouterIndex].middleware[currentMiddlewareIndex]
+    } else {
+      // We ran out of middleware on the current router
+      if currentRouterIndex == 0 {
+        // If we're still on the root router, it's time to actually figure out what the route is.
+        // Do so, and update the various variables.
+        // We could also 404 at this point: if so, run NotFound handlers and return.
+        route, wildcardMap := calculateRoute(r, req)
+        if route == nil {
+          // 404 baby
+          return
+        }
+        
+        req.route = route
+        req.UrlVariables = wildcardMap
+        
+        routers = append(routers, additionalRouters(route)...)
+        contexts = append(contexts, additionalContexts(contexts[0], routers))
+      }
+      
+      currentMiddlewareIndex = 0
+      currentRouterIndex += 1
+      routersLen := len(routers)
+      for currentRouterIndex < routersLen {
+        currentMiddlewareLen = len(routers[currentRouterIndex].middleware)
+        if currentMiddlewareLen > 0 {
+          break
+        }
+        currentRouterIndex += 1
+      }
+      if currentRouterIndex <= routersLen {
+        middleware = routers[currentRouterIndex].middleware[currentMiddlewareIndex]
+      } else {
+        // Invoke the action!
+      }
+    }
+    
+    currentMiddlewareIndex += 1
+    
+    // Invoke middleware. Reflect on the function to call the context or no-context variant.
+    if middleware.IsValid() {
+      invoke(middleware, contexts[currentRouterIndex], []reflect.Value{vrw, vreq, nextValue})
+    }
+  }
+  nextValue = reflect.ValueOf(next)
+  
+  return next
+}
+
+// Returns a pointer to the context of the router
+func createRootContext(rootRouter *Router) reflect.Value {
+  return 
+}
+
+
+
+//
+// BEGIN OLD CODE
+// 
+
+
+
 // This is the main entry point for a request from the built-in Go http library.
 // router should be the root router.
 func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
@@ -108,7 +220,6 @@ func createContexts(routers []*Router) (contexts []reflect.Value) {
   return
 }
 
-//
 func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewareFunc {
   // r is the target router (could be a leaf router, or the root router, or somewhere in between)
   // Construct routers, being [leaf, child, ..., root]

@@ -1,7 +1,6 @@
 
 TODO:
 
- - Some basic tests for routing, middleware, etc
  - If contexts are the same between routers, don't blow up
  - rejigger serving structure:
    - Run root middleware first, THEN do routing.
