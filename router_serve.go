@@ -7,6 +7,7 @@ import (
   "runtime"
 )
 
+// This is the entry point for servering all requests
 func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
   
   // Wrap the request and writer.
@@ -20,11 +21,17 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
     }
   }()
   
-  middlewareStack := rootRouter.MiddlewareStack(responseWriter, request)
-  middlewareStack()
+  next := rootRouter.MiddlewareStack(responseWriter, request)
+  next()
 }
 
 // r should be the root router
+// This function executes the middleware stack. It does so creating/returning an anonymous function/closure.
+// This closure can be called multiple times (eg, next()). Each time it is called, the next middleware is called.
+// Each time a middleware is called, this 'next' function is passed into it, which will/might call it again.
+// There are two 'virtual' middlewares in this stack: the route choosing middleware, and the action invoking middleware.
+// The route choosing middleware is executed after all root middleware. It picks the route.
+// The action invoking middleware is executed after all middleware. It executes the final handler.
 func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewareFunc {
   // Where are we in the stack
   routers := []*Router{r}
@@ -45,7 +52,9 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
     }
     
     // Find middleware to invoke. The goal of this block is to set the middleware variable. If it can't be done, it will be the zero value.
-    // Side effects of this loop: set currentMiddlewareIndex, currentRouterIndex, currentMiddlewareLen
+    // Side effects of this block:
+    //  - set currentMiddlewareIndex, currentRouterIndex, currentMiddlewareLen
+    //  - calculate route, setting routers/contexts, and fields in req.
     var middleware reflect.Value
     if currentMiddlewareIndex < currentMiddlewareLen {
       middleware = routers[currentRouterIndex].middleware[currentMiddlewareIndex]
@@ -94,7 +103,7 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
     
     currentMiddlewareIndex += 1
     
-    // Invoke middleware. Reflect on the function to call the context or no-context variant.
+    // Invoke middleware.
     if middleware.IsValid() {
       invoke(middleware, contexts[currentRouterIndex], []reflect.Value{vrw, vreq, nextValue})
     }
@@ -157,8 +166,17 @@ func contextsFor(contexts []reflect.Value, routers []*Router) []reflect.Value {
   return contexts
 }
 
-// This is called against the *target* router
-func (targetRouter *Router) handlePanic(rw *ResponseWriter, req *Request, err interface{}) {
+// If there's a panic in the root middleware (so that we don't have a route/target), then invoke the root handler or default.
+// If there's a panic in other middleware, then invoke the target action's function.
+// If there's a panic in the action handler, then invoke the target action's function.
+func (rootRouter *Router) handlePanic(rw *ResponseWriter, req *Request, err interface{}) {
+  
+  var targetRouter *Router
+  if req.route == nil {
+    targetRouter = rootRouter
+  } else {
+    targetRouter = req.route.Router
+  }
   
   // Find the first router that has an errorHandler
   // We also need to get the context corresponding to that router.

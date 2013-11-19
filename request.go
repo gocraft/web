@@ -15,6 +15,7 @@ type Request struct {
   // The actual route that got invoked
   route *Route
   
-  // The target context corresponding to the route.
-  context reflect.Value
+  
+  rootContext reflect.Value   // Root context. Set immediately.
+  targetContext reflect.Value // The target context corresponding to the route. Not set until root middleware is done.
 }
