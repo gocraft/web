@@ -57,7 +57,13 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
         // We could also 404 at this point: if so, run NotFound handlers and return.
         route, wildcardMap := calculateRoute(r, req)
         if route == nil {
-          panic("404")
+          if r.notFoundHandler != nil {
+            rw.WriteHeader(http.StatusNotFound)
+            r.notFoundHandler(rw, req)
+          } else {
+            rw.WriteHeader(http.StatusNotFound)
+            fmt.Fprintf(rw, DefaultNotFoundResponse)
+          }
           return
         }
         
@@ -65,9 +71,7 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
         req.UrlVariables = wildcardMap
         
         routers = routersFor(route)
-        fmt.Println("Ok I got all the routers dog: ", routers)
         contexts = contextsFor(contexts, routers)
-        fmt.Println("Ok I got all the contexts dog: ", contexts)
       }
       
       currentMiddlewareIndex = 0
