@@ -43,3 +43,17 @@ func (s *NotFoundTestSuite) TestWithHandler(c *C) {
   c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "My Not Found")
   c.Assert(rw.Code, Equals, http.StatusNotFound)
 }
+
+func (c *Context) HandlerWithContext(rw web.ResponseWriter, r *web.Request) {
+  fmt.Fprintf(rw, "My Not Found With Context")
+}
+
+func (s *NotFoundTestSuite) TestWithRootContext(c *C) {
+  router := web.New(Context{})
+  router.NotFoundHandler((*Context).HandlerWithContext)
+  
+  rw, req := newTestRequest("GET", "/this_path_doesnt_exist")
+  router.ServeHTTP(rw, req)
+  c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "My Not Found With Context")
+  c.Assert(rw.Code, Equals, http.StatusNotFound)
+}

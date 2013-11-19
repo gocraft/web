@@ -1,20 +1,14 @@
 
 TODO:
 
- - If contexts are the same between routers, don't blow up
  - 500 handling:
    - write test for panic in middleware
    - write test for panics when contexts are the same between routers
- - Question: should i embed a ptr or the actual struct?
-   - Not until I start benchmarking and pprofing
- - 404:
-   - Since 404 is called after we handle our root middleware, we have a root context. 404 handler should accept a root context
  - refactor all validation methods
    - good error messaging
    - proper logging
  - benchmarks
  - static file handling
- - change reponsewriter to be an interface
  - change middleware to pass rw, r into next middleware
  - do further routing tests. Test tree.go. Wildcards.
  - audit exported structures (appResponseWriter, for instance)

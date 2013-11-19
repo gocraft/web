@@ -38,7 +38,7 @@ type Router struct {
   
   // This can only be set on the root handler, since by virtue of not finding a route, we don't have a target.
   // (That being said, in the future we could investigate namespace matches)
-  notFoundHandler NotFoundFunc
+  notFoundHandler reflect.Value
 }
 
 type Route struct {
@@ -49,7 +49,6 @@ type Route struct {
 }
 
 type NextMiddlewareFunc func()
-type NotFoundFunc func(ResponseWriter, *Request)
 
 func New(ctx interface{}) *Router {
   validateContext(ctx, nil)
@@ -81,9 +80,9 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 }
 
 func (r *Router) Middleware(fn interface{}) *Router {
-  fnv := reflect.ValueOf(fn)
-  validateMiddleware(fnv, r.contextType)
-  r.middleware = append(r.middleware, fnv)
+  vfn := reflect.ValueOf(fn)
+  validateMiddleware(vfn, r.contextType)
+  r.middleware = append(r.middleware, vfn)
   return r
 }
 
@@ -93,11 +92,13 @@ func (r *Router) ErrorHandler(fn interface{}) {
   r.errorHandler = vfn
 }
 
-func (r *Router) NotFoundHandler(fn NotFoundFunc) {
+func (r *Router) NotFoundHandler(fn interface{}) {
   if r.parent != nil {
     panic("You can only set a NotFoundHandler on the root router.")
   }
-  r.notFoundHandler = fn
+  vfn := reflect.ValueOf(fn)
+  validateNotFoundHandler(vfn, r.contextType)
+  r.notFoundHandler = vfn
 }
 
 func (r *Router) Get(path string, fn interface{}) {
@@ -160,20 +161,28 @@ func validateContext(ctx interface{}, parentCtxType reflect.Type) {
 
 // Panics unless fn is a proper handler wrt ctxType
 // eg, func(ctx *ctxType, writer, request)
-func validateHandler(fnv reflect.Value, ctxType reflect.Type) {
+func validateHandler(vfn reflect.Value, ctxType reflect.Type) {
   var req *Request
   var resp func() ResponseWriter
-  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req)) {
+  if !isValidHandler(vfn, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req)) {
     panic("web: handler be a function with signature TODO")
   }
 }
 
-func validateErrorHandler(fnv reflect.Value, ctxType reflect.Type) {
+func validateErrorHandler(vfn reflect.Value, ctxType reflect.Type) {
   var req *Request
   var resp func() ResponseWriter
   var interfaceType func() interface{}  // This is weird. I need to get an interface{} reflect.Type; var x interface{}; TypeOf(x) doesn't work, because it returns nil
-  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req), reflect.TypeOf(interfaceType).Out(0)) {
+  if !isValidHandler(vfn, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req), reflect.TypeOf(interfaceType).Out(0)) {
     panic("web: error handler be a function with signature TODO")
+  }
+}
+
+func validateNotFoundHandler(vfn reflect.Value, ctxType reflect.Type) {
+  var req *Request
+  var resp func() ResponseWriter
+  if !isValidHandler(vfn, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req)) {
+    panic("web: not found handler be a function with signature TODO")
   }
 }
 
@@ -184,14 +193,14 @@ func validateMiddleware(fnv reflect.Value, ctxType reflect.Type) {
   var req *Request
   var resp func() ResponseWriter
   var n NextMiddlewareFunc
-  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req), reflect.TypeOf(n)) {
+  if !isValidHandler(fnv, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req), reflect.TypeOf(n)) {
     panic("web: middlware must be a function with signature TODO")
   }
 }
 
 // Ensures fnv is a function, that optionally takes a *ctxType as the first argument, followed by the specified types. Handlers have no return value.
 // Returns true if valid, false otherwise.
-func isValidateHandler(fnv reflect.Value, ctxType reflect.Type, types ...reflect.Type) bool {
+func isValidHandler(fnv reflect.Value, ctxType reflect.Type, types ...reflect.Type) bool {
   fnType := fnv.Type()
   
   if fnType.Kind() != reflect.Func {

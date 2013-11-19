@@ -68,11 +68,10 @@ func (r *Router) MiddlewareStack(rw *AppResponseWriter, req *Request) NextMiddle
         // We could also 404 at this point: if so, run NotFound handlers and return.
         route, wildcardMap := calculateRoute(r, req)
         if route == nil {
-          if r.notFoundHandler != nil {
-            rw.WriteHeader(http.StatusNotFound)
-            r.notFoundHandler(rw, req)
+          rw.WriteHeader(http.StatusNotFound)
+          if r.notFoundHandler.IsValid() {
+            invoke(r.notFoundHandler, contexts[0], []reflect.Value{vrw, vreq})
           } else {
-            rw.WriteHeader(http.StatusNotFound)
             fmt.Fprintf(rw, DefaultNotFoundResponse)
           }
           return
