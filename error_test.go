@@ -119,14 +119,40 @@ func (s *ErrorTestSuite) TestMultipleErrorHandlers2(c *C) {
   c.Assert(rw.Code, Equals, http.StatusInternalServerError)
 }
 
+func (s *ErrorTestSuite) TestRootMiddlewarePanic(c *C) {
+  router := web.New(Context{})
+  router.Middleware((*Context).ErrorMiddleware)
+  router.ErrorHandler((*Context).ErrorHandler)
+  admin := router.Subrouter(AdminContext{}, "/admin")
+  admin.ErrorHandler((*AdminContext).ErrorHandler)
+  admin.Get("/action", (*AdminContext).ErrorAction)
+  
+  rw, req := newTestRequest("GET", "/admin/action")
+  router.ServeHTTP(rw, req)
+  assertResponse(c, rw, "My Error", 500)
+}
 
+func (s *ErrorTestSuite) TestNonRootMiddlewarePanic(c *C) {
+  router := web.New(Context{})
+  router.ErrorHandler((*Context).ErrorHandler)
+  admin := router.Subrouter(AdminContext{}, "/admin")
+  admin.Middleware((*AdminContext).ErrorMiddleware)
+  admin.ErrorHandler((*AdminContext).ErrorHandler)
+  admin.Get("/action", (*AdminContext).ErrorAction)
+  
+  rw, req := newTestRequest("GET", "/admin/action")
+  router.ServeHTTP(rw, req)
+  assertResponse(c, rw, "Admin Error", 500)
+}
 
-// Things I want to test:
-// - panic in middlware triggers handler of target
-// - if contexts don't change between subrouters, then what.
-
-
-
-
-
-
+func (s *ErrorTestSuite) TestConsistentContext(c *C) {
+  router := web.New(Context{})
+  router.ErrorHandler((*Context).ErrorHandler)
+  admin := router.Subrouter(Context{}, "/admin")
+  admin.ErrorHandler((*Context).ErrorHandlerSecondary)
+  admin.Get("/foo", (*Context).ErrorAction)
+  
+  rw, req := newTestRequest("GET", "/admin/foo")
+  router.ServeHTTP(rw, req)
+  assertResponse(c, rw, "My Secondary Error", 500)
+}

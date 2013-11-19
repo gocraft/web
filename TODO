@@ -1,15 +1,16 @@
 
 TODO:
 
- - 500 handling:
-   - write test for panic in middleware
-   - write test for panics when contexts are the same between routers
+ - test that nested routers with "/" path basically work.
+ - change middleware to pass rw, r into next middleware
+ - static file handling
+ 
  - refactor all validation methods
    - good error messaging
    - proper logging
+ 
  - benchmarks
- - static file handling
- - change middleware to pass rw, r into next middleware
+ 
  - do further routing tests. Test tree.go. Wildcards.
  - audit exported structures (appResponseWriter, for instance)
  - refactor tests to use assertResponse

@@ -54,11 +54,25 @@ type TicketsContext struct {
   *AdminContext
 }
 
+func (c *Context) ErrorMiddleware(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+  var x, y int
+  fmt.Fprintln(w, x / y)
+}
+
 func (c *Context) ErrorHandler(w web.ResponseWriter, r *web.Request, err interface{}) {
   fmt.Fprintf(w, "My Error")
 }
 
+func (c *Context) ErrorHandlerSecondary(w web.ResponseWriter, r *web.Request, err interface{}) {
+  fmt.Fprintf(w, "My Secondary Error")
+}
+
 func (c *Context) ErrorAction(w web.ResponseWriter, r *web.Request) {
+  var x, y int
+  fmt.Fprintln(w, x / y)
+}
+
+func (c *AdminContext) ErrorMiddleware(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   var x, y int
   fmt.Fprintln(w, x / y)
 }
