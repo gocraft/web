@@ -40,6 +40,8 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
   currentRouterIndex := 0
   currentMiddlewareLen := len(r.middleware)
   
+  req.rootContext = contexts[0]
+  
   // Pre-make some Values
   vrw := reflect.ValueOf(rw)
   vreq := reflect.ValueOf(req)
@@ -76,11 +78,12 @@ func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewar
           return
         }
         
-        req.route = route
-        req.UrlVariables = wildcardMap
-        
         routers = routersFor(route)
         contexts = contextsFor(contexts, routers)
+        
+        req.targetContext = contexts[len(contexts) - 1]
+        req.route = route
+        req.UrlVariables = wildcardMap
       }
       
       currentMiddlewareIndex = 0
@@ -170,34 +173,33 @@ func contextsFor(contexts []reflect.Value, routers []*Router) []reflect.Value {
 // If there's a panic in other middleware, then invoke the target action's function.
 // If there's a panic in the action handler, then invoke the target action's function.
 func (rootRouter *Router) handlePanic(rw *ResponseWriter, req *Request, err interface{}) {
+  var targetRouter *Router      // This will be set to the router we want to use the errorHandler on.
+  var context reflect.Value     // this is the context of the target router
   
-  var targetRouter *Router
   if req.route == nil {
     targetRouter = rootRouter
+    context = req.rootContext
   } else {
     targetRouter = req.route.Router
-  }
-  
-  // Find the first router that has an errorHandler
-  // We also need to get the context corresponding to that router.
-  curRouter := targetRouter
-  curContextPtr := req.context
-  for !curRouter.errorHandler.IsValid() && curRouter.parent != nil {
-    curRouter = curRouter.parent
+    context = req.targetContext
     
-    // Need to set curContext to the next context, UNLESS the context is the same type.
-    curContextStruct := reflect.Indirect(curContextPtr)
-    if curRouter.contextType != curContextStruct.Type() {
-      curContextPtr = curContextStruct.Field(0)
-      if reflect.Indirect(curContextPtr).Type() != curRouter.contextType {
-        panic("oshit why")
+    for !targetRouter.errorHandler.IsValid() && targetRouter.parent != nil {
+      targetRouter = targetRouter.parent
+    
+      // Need to set context to the next context, UNLESS the context is the same type.
+      curContextStruct := reflect.Indirect(context)
+      if targetRouter.contextType != curContextStruct.Type() {
+        context = curContextStruct.Field(0)
+        if reflect.Indirect(context).Type() != targetRouter.contextType {
+          panic("oshit why")
+        }
       }
     }
   }
   
-  if curRouter.errorHandler.IsValid() {
+  if targetRouter.errorHandler.IsValid() {
     rw.WriteHeader(http.StatusInternalServerError)
-    invoke(curRouter.errorHandler, curContextPtr, []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(err)})
+    invoke(targetRouter.errorHandler, context, []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(err)})
   } else {
     http.Error(rw, DefaultPanicResponse, http.StatusInternalServerError)
   }
