@@ -154,16 +154,21 @@ func routersFor(route *Route) []*Router {
 // contexts is initially filled with a single context for the root
 // routers is [root, child, ..., leaf] with at least 1 element
 // Returns [ctx for root, ... ctx for leaf]
+// NOTE: if two routers have the same contextType, then they'll share the exact same context.
 func contextsFor(contexts []reflect.Value, routers []*Router) []reflect.Value {
   routersLen := len(routers)
   
   for i := 1; i < routersLen; i += 1 {
-    ctx := reflect.New(routers[i].contextType)
+    var ctx reflect.Value
+    if routers[i].contextType == routers[i - 1].contextType {
+      ctx = contexts[i - 1]
+    } else {
+      ctx = reflect.New(routers[i].contextType)
+      // set the first field to the parent
+      f := reflect.Indirect(ctx).Field(0)
+      f.Set(contexts[i - 1])
+    }
     contexts = append(contexts, ctx)
-    
-    // set the first field to the parent
-    f := reflect.Indirect(ctx).Field(0)
-    f.Set(contexts[i - 1])
   }
   
   return contexts

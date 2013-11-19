@@ -2,7 +2,6 @@ package web
 
 import (
   "reflect"
-  "fmt"
 )
 
 type HttpMethod string
@@ -78,8 +77,6 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
   newRouter.pathPrefix = appendPath(r.pathPrefix, pathPrefix)
   newRouter.root = r.root
   
-  fmt.Println("newRouter: ", newRouter) // Keep this to allow fmt
-  
   return newRouter
 }
 
@@ -129,12 +126,9 @@ func (r *Router) Patch(path string, fn interface{}) {
 func (r *Router) addRoute(method HttpMethod, path string, fn interface{}) {
   fnv := reflect.ValueOf(fn)
   validateHandler(fnv, r.contextType)
-  
   fullPath := appendPath(r.pathPrefix, path)
-  
   route := &Route{Method: method, Path: fullPath, Handler: fnv, Router: r}
   r.routes = append(r.routes, route)
-  
   r.root[method].add(fullPath, route)
 }
 
@@ -150,7 +144,7 @@ func validateContext(ctx interface{}, parentCtxType reflect.Type) {
     panic("web: Context needs to be a struct type")
   }
   
-  if parentCtxType != nil {
+  if parentCtxType != nil && parentCtxType != ctxType {
     if ctxType.NumField() == 0 {
       panic("web: Context needs to have first field be a pointer to parent context")
     }

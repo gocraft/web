@@ -1,7 +1,6 @@
 
 TODO:
 
- - Proper logging of all requests, including 404's. Response code recording in the response object.
  - If contexts are the same between routers, don't blow up
  - 500 handling:
    - write test for panic in middleware
@@ -10,11 +9,11 @@ TODO:
    - Not until I start benchmarking and pprofing
  - 404:
    - Since 404 is called after we handle our root middleware, we have a root context. 404 handler should accept a root context
- - 404 + logging
  - refactor all validation methods
    - good error messaging
    - proper logging
  - benchmarks
+ - static file handling
  - change reponsewriter to be an interface
  - change middleware to pass rw, r into next middleware
  - do further routing tests. Test tree.go. Wildcards.

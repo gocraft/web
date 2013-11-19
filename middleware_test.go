@@ -227,7 +227,6 @@ func (s *MiddlewareTestSuite) TestTicketsE(c *C) {
   assertResponse(c, rw, "context-mw-Alpha context-mw-Beta context-mw-Gamma admin-mw-Epsilon admin-mw-Zeta tickets-mw-Eta tickets-D", 200)
 }
 
-
 func (s *MiddlewareTestSuite) TestNoNext(c *C) {
   router := web.New(Context{})
   router.Middleware((*Context).mwNoNext)
@@ -237,4 +236,19 @@ func (s *MiddlewareTestSuite) TestNoNext(c *C) {
   router.ServeHTTP(rw, req)
   assertResponse(c, rw, "context-mw-NoNext", 200)
 }
+
+func (s *MiddlewareTestSuite) TestSameContext(c *C) {
+  router := web.New(Context{})
+  router.Middleware((*Context).mwAlpha).
+         Middleware((*Context).mwBeta)
+  admin := router.Subrouter(Context{}, "/admin")
+  admin.Middleware((*Context).mwGamma)
+  admin.Get("/foo", (*Context).A)
+  
+  rw, req := newTestRequest("GET", "/admin/foo")
+  router.ServeHTTP(rw, req)
+  assertResponse(c, rw, "context-mw-Alpha context-mw-Beta context-mw-Gamma context-A", 200)
+}
+
+// test that nested routers with "/" path basically work.
 
