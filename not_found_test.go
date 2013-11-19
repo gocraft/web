@@ -30,7 +30,7 @@ func (s *NotFoundTestSuite) TestBadMethod(c *C) {
 }
 
 
-func MyNotFoundHandler(rw *web.ResponseWriter, r *web.Request) {
+func MyNotFoundHandler(rw web.ResponseWriter, r *web.Request) {
   fmt.Fprintf(rw, "My Not Found")
 }
 

@@ -12,7 +12,7 @@ import (
 // This is development-only middleware. It was more or less copied from github.com/pilu/traffic
 //
 
-func ShowErrorsMiddleware(rw *ResponseWriter, req *Request, next NextMiddlewareFunc) {
+func ShowErrorsMiddleware(rw ResponseWriter, req *Request, next NextMiddlewareFunc) {
   defer func() {
     if err := recover(); err != nil {
       const size = 4096
@@ -26,7 +26,7 @@ func ShowErrorsMiddleware(rw *ResponseWriter, req *Request, next NextMiddlewareF
   next()
 }
 
-func renderPrettyError(rw *ResponseWriter, req *Request, err interface{}, stack []byte) {
+func renderPrettyError(rw ResponseWriter, req *Request, err interface{}, stack []byte) {
   _, filePath, line, _ := runtime.Caller(5)
 
   data := map[string]interface{} {

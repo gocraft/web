@@ -11,7 +11,7 @@ import (
 func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
   
   // Wrap the request and writer.
-  responseWriter := &ResponseWriter{rw}
+  responseWriter := &AppResponseWriter{ResponseWriter: rw}
   request := &Request{Request: r}
   
   // Handle errors
@@ -32,7 +32,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // There are two 'virtual' middlewares in this stack: the route choosing middleware, and the action invoking middleware.
 // The route choosing middleware is executed after all root middleware. It picks the route.
 // The action invoking middleware is executed after all middleware. It executes the final handler.
-func (r *Router) MiddlewareStack(rw *ResponseWriter, req *Request) NextMiddlewareFunc {
+func (r *Router) MiddlewareStack(rw *AppResponseWriter, req *Request) NextMiddlewareFunc {
   // Where are we in the stack
   routers := []*Router{r}
   contexts := []reflect.Value{reflect.New(r.contextType)}
@@ -172,7 +172,7 @@ func contextsFor(contexts []reflect.Value, routers []*Router) []reflect.Value {
 // If there's a panic in the root middleware (so that we don't have a route/target), then invoke the root handler or default.
 // If there's a panic in other middleware, then invoke the target action's function.
 // If there's a panic in the action handler, then invoke the target action's function.
-func (rootRouter *Router) handlePanic(rw *ResponseWriter, req *Request, err interface{}) {
+func (rootRouter *Router) handlePanic(rw *AppResponseWriter, req *Request, err interface{}) {
   var targetRouter *Router      // This will be set to the router we want to use the errorHandler on.
   var context reflect.Value     // this is the context of the target router
   

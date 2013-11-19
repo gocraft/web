@@ -18,11 +18,12 @@ TODO:
  - change reponsewriter to be an interface
  - change middleware to pass rw, r into next middleware
  - do further routing tests. Test tree.go. Wildcards.
- 
+ - audit exported structures (appResponseWriter, for instance)
  - refactor tests to use assertResponse
 
  - ??? Unsure thoughts
    - Wrap the request with some stuff that gives you a nice view of the params
+   
 
 
 Handlers:

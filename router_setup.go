@@ -50,7 +50,7 @@ type Route struct {
 }
 
 type NextMiddlewareFunc func()
-type NotFoundFunc func(*ResponseWriter, *Request)
+type NotFoundFunc func(ResponseWriter, *Request)
 
 func New(ctx interface{}) *Router {
   validateContext(ctx, nil)
@@ -168,17 +168,17 @@ func validateContext(ctx interface{}, parentCtxType reflect.Type) {
 // eg, func(ctx *ctxType, writer, request)
 func validateHandler(fnv reflect.Value, ctxType reflect.Type) {
   var req *Request
-  var resp *ResponseWriter
-  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp), reflect.TypeOf(req)) {
+  var resp func() ResponseWriter
+  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req)) {
     panic("web: handler be a function with signature TODO")
   }
 }
 
 func validateErrorHandler(fnv reflect.Value, ctxType reflect.Type) {
   var req *Request
-  var resp *ResponseWriter
-  var wat func() interface{}  // This is weird. I need to get an interface{} reflect.Type; var x interface{}; TypeOf(x) doesn't work, because it returns nil
-  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp), reflect.TypeOf(req), reflect.TypeOf(wat).Out(0)) {
+  var resp func() ResponseWriter
+  var interfaceType func() interface{}  // This is weird. I need to get an interface{} reflect.Type; var x interface{}; TypeOf(x) doesn't work, because it returns nil
+  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req), reflect.TypeOf(interfaceType).Out(0)) {
     panic("web: error handler be a function with signature TODO")
   }
 }
@@ -188,9 +188,9 @@ func validateErrorHandler(fnv reflect.Value, ctxType reflect.Type) {
 //    f(*web.ResponseWriter, *web.Request, NextMiddlewareFunc)
 func validateMiddleware(fnv reflect.Value, ctxType reflect.Type) {
   var req *Request
-  var resp *ResponseWriter
+  var resp func() ResponseWriter
   var n NextMiddlewareFunc
-  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp), reflect.TypeOf(req), reflect.TypeOf(n)) {
+  if !isValidateHandler(fnv, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req), reflect.TypeOf(n)) {
     panic("web: middlware must be a function with signature TODO")
   }
 }

@@ -5,7 +5,7 @@ import (
   "fmt"
 )
 
-func LoggerMiddleware(rw *ResponseWriter, req *Request, next NextMiddlewareFunc) {
+func LoggerMiddleware(rw ResponseWriter, req *Request, next NextMiddlewareFunc) {
   startTime := time.Now()
 
   next()
@@ -23,5 +23,5 @@ func LoggerMiddleware(rw *ResponseWriter, req *Request, next NextMiddlewareFunc)
     durationUnits = "ns"
   }
 
-  fmt.Printf("[%d %s] '%s'\n", duration, durationUnits, req.URL.Path)
+  fmt.Printf("[%d %s] %d '%s'\n", duration, durationUnits, rw.StatusCode(), req.URL.Path)
 }

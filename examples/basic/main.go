@@ -14,27 +14,27 @@ type AdminContext struct {
   *Context
 }
 
-func (ctx *Context) SetRequestIdentifier(w *web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (ctx *Context) SetRequestIdentifier(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   //fmt.Println("Setting request identifier")
   ctx.RequestIdentifier = "123"
   next()
 }
 
-func (ctx *Context) Signin(w *web.ResponseWriter, r *web.Request) {
+func (ctx *Context) Signin(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintf(w, "You got to signin")
 }
 
-func (ctx *AdminContext) UsersList(w *web.ResponseWriter, r *web.Request) {
+func (ctx *AdminContext) UsersList(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintln(w, "UsersList: ", w, r)
   fmt.Fprintln(w, "UsersList: request identifier: ", ctx.RequestIdentifier)
 }
 
-func (ctx *AdminContext) Exception(w *web.ResponseWriter, r *web.Request) {
+func (ctx *AdminContext) Exception(w web.ResponseWriter, r *web.Request) {
   var x,y int
   fmt.Println(x/y)
 }
 
-func (ctx *AdminContext) SuggestionView(w *web.ResponseWriter, r *web.Request) {
+func (ctx *AdminContext) SuggestionView(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintln(w, "SuggestionView: entered")
   fmt.Fprintln(w, "r = ", r.UrlVariables)
 }

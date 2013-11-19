@@ -11,61 +11,61 @@ import (
 type MiddlewareTestSuite struct {}
 var _ = Suite(&MiddlewareTestSuite{})
 
-func (c *Context) A(w *web.ResponseWriter, r *web.Request) {
+func (c *Context) A(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintf(w, "context-A")
 }
 
-func (c *Context) Z(w *web.ResponseWriter, r *web.Request) {
+func (c *Context) Z(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintf(w, "context-Z")
 }
 
-func (c *AdminContext) B(w *web.ResponseWriter, r *web.Request) {
+func (c *AdminContext) B(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintf(w, "admin-B")
 }
 
-func (c *ApiContext) C(w *web.ResponseWriter, r *web.Request) {
+func (c *ApiContext) C(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintf(w, "api-C")
 }
 
-func (c *TicketsContext) D(w *web.ResponseWriter, r *web.Request) {
+func (c *TicketsContext) D(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintf(w, "tickets-D")
 }
 
-func (c *Context) mwNoNext(w *web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *Context) mwNoNext(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "context-mw-NoNext ")
 }
 
-func (c *Context) mwAlpha(w *web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *Context) mwAlpha(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "context-mw-Alpha ")
   next()
 }
 
-func (c *Context) mwBeta(w *web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *Context) mwBeta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "context-mw-Beta ")
   next()
 }
 
-func (c *Context) mwGamma(w *web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *Context) mwGamma(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "context-mw-Gamma ")
   next()
 }
 
-func (c *ApiContext) mwDelta(w *web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *ApiContext) mwDelta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "api-mw-Delta ")
   next()
 }
 
-func (c *AdminContext) mwEpsilon(w *web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *AdminContext) mwEpsilon(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "admin-mw-Epsilon ")
   next()
 }
 
-func (c *AdminContext) mwZeta(w *web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *AdminContext) mwZeta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "admin-mw-Zeta ")
   next()
 }
 
-func (c *TicketsContext) mwEta(w *web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *TicketsContext) mwEta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "tickets-mw-Eta ")
   next()
 }

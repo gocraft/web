@@ -11,7 +11,7 @@ import (
 type ErrorTestSuite struct {}
 var _ = Suite(&ErrorTestSuite{})
 
-func ErrorHandlerWithNoContext(w *web.ResponseWriter, r *web.Request, err interface{}) {
+func ErrorHandlerWithNoContext(w web.ResponseWriter, r *web.Request, err interface{}) {
   fmt.Fprintf(w, "Contextless Error")
 }
 
