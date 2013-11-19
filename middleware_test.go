@@ -250,5 +250,13 @@ func (s *MiddlewareTestSuite) TestSameContext(c *C) {
   assertResponse(c, rw, "context-mw-Alpha context-mw-Beta context-mw-Gamma context-A", 200)
 }
 
-// test that nested routers with "/" path basically work.
+func (s *MiddlewareTestSuite) TestSameNamespace(c *C) {
+  router := web.New(Context{})
+  admin := router.Subrouter(AdminContext{}, "/")
+  admin.Get("/action", (*AdminContext).B)
+  
+  rw, req := newTestRequest("GET", "/action")
+  router.ServeHTTP(rw, req)
+  assertResponse(c, rw, "admin-B", 200)
+}
 
