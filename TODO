@@ -1,8 +1,5 @@
 
 TODO:
-
- - test that nested routers with "/" path basically work.
- - change middleware to pass rw, r into next middleware
  - static file handling
  
  - refactor all validation methods

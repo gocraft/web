@@ -8,7 +8,7 @@ import (
 func LoggerMiddleware(rw ResponseWriter, req *Request, next NextMiddlewareFunc) {
   startTime := time.Now()
 
-  next()
+  next(rw, req)
 
   duration := time.Since(startTime).Nanoseconds()
   var durationUnits string

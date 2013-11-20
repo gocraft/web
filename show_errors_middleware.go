@@ -23,7 +23,7 @@ func ShowErrorsMiddleware(rw ResponseWriter, req *Request, next NextMiddlewareFu
     }
   }()
   
-  next()
+  next(rw, req)
 }
 
 func renderPrettyError(rw ResponseWriter, req *Request, err interface{}, stack []byte) {

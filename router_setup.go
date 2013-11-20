@@ -48,7 +48,7 @@ type Route struct {
   Handler reflect.Value // Dynamic method sig.
 }
 
-type NextMiddlewareFunc func()
+type NextMiddlewareFunc func(ResponseWriter, *Request)
 
 func New(ctx interface{}) *Router {
   validateContext(ctx, nil)
@@ -64,8 +64,6 @@ func New(ctx interface{}) *Router {
 }
 
 func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
-  
-  // First, we need to make sure that ctx includes a pointer to the parent context in the first slot
   validateContext(ctx, r.contextType)
   
   // Create new router, link up hierarchy

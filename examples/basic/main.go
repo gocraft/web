@@ -17,7 +17,7 @@ type AdminContext struct {
 func (ctx *Context) SetRequestIdentifier(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   //fmt.Println("Setting request identifier")
   ctx.RequestIdentifier = "123"
-  next()
+  next(w, r)
 }
 
 func (ctx *Context) Signin(w web.ResponseWriter, r *web.Request) {

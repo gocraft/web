@@ -21,8 +21,8 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
     }
   }()
   
-  next := rootRouter.MiddlewareStack(responseWriter, request)
-  next()
+  next := rootRouter.MiddlewareStack(request)
+  next(responseWriter, request)
 }
 
 // r should be the root router
@@ -32,7 +32,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // There are two 'virtual' middlewares in this stack: the route choosing middleware, and the action invoking middleware.
 // The route choosing middleware is executed after all root middleware. It picks the route.
 // The action invoking middleware is executed after all middleware. It executes the final handler.
-func (r *Router) MiddlewareStack(rw *AppResponseWriter, req *Request) NextMiddlewareFunc {
+func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
   // Where are we in the stack
   routers := []*Router{r}
   contexts := []reflect.Value{reflect.New(r.contextType)}
@@ -40,15 +40,11 @@ func (r *Router) MiddlewareStack(rw *AppResponseWriter, req *Request) NextMiddle
   currentRouterIndex := 0
   currentMiddlewareLen := len(r.middleware)
   
-  req.rootContext = contexts[0]
-  
-  // Pre-make some Values
-  vrw := reflect.ValueOf(rw)
-  vreq := reflect.ValueOf(req)
+  request.rootContext = contexts[0]
   
   var next NextMiddlewareFunc // create self-referential anonymous function
   var nextValue reflect.Value
-  next = func() {
+  next = func(rw ResponseWriter, req *Request) {
     if currentRouterIndex >= len(routers) {
       return
     }
@@ -70,7 +66,7 @@ func (r *Router) MiddlewareStack(rw *AppResponseWriter, req *Request) NextMiddle
         if route == nil {
           rw.WriteHeader(http.StatusNotFound)
           if r.notFoundHandler.IsValid() {
-            invoke(r.notFoundHandler, contexts[0], []reflect.Value{vrw, vreq})
+            invoke(r.notFoundHandler, contexts[0], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
           } else {
             fmt.Fprintf(rw, DefaultNotFoundResponse)
           }
@@ -99,7 +95,7 @@ func (r *Router) MiddlewareStack(rw *AppResponseWriter, req *Request) NextMiddle
         middleware = routers[currentRouterIndex].middleware[currentMiddlewareIndex]
       } else {
         // We're done! invoke the action
-        invoke(req.route.Handler, contexts[len(contexts) - 1], []reflect.Value{vrw, vreq})
+        invoke(req.route.Handler, contexts[len(contexts) - 1], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
       }
     }
     
@@ -107,7 +103,7 @@ func (r *Router) MiddlewareStack(rw *AppResponseWriter, req *Request) NextMiddle
     
     // Invoke middleware.
     if middleware.IsValid() {
-      invoke(middleware, contexts[currentRouterIndex], []reflect.Value{vrw, vreq, nextValue})
+      invoke(middleware, contexts[currentRouterIndex], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), nextValue})
     }
   }
   nextValue = reflect.ValueOf(next)

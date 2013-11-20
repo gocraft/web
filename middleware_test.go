@@ -37,37 +37,37 @@ func (c *Context) mwNoNext(w web.ResponseWriter, r *web.Request, next web.NextMi
 
 func (c *Context) mwAlpha(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "context-mw-Alpha ")
-  next()
+  next(w, r)
 }
 
 func (c *Context) mwBeta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "context-mw-Beta ")
-  next()
+  next(w, r)
 }
 
 func (c *Context) mwGamma(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "context-mw-Gamma ")
-  next()
+  next(w, r)
 }
 
 func (c *ApiContext) mwDelta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "api-mw-Delta ")
-  next()
+  next(w, r)
 }
 
 func (c *AdminContext) mwEpsilon(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "admin-mw-Epsilon ")
-  next()
+  next(w, r)
 }
 
 func (c *AdminContext) mwZeta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "admin-mw-Zeta ")
-  next()
+  next(w, r)
 }
 
 func (c *TicketsContext) mwEta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   fmt.Fprintf(w, "tickets-mw-Eta ")
-  next()
+  next(w, r)
 }
 
 func (s *MiddlewareTestSuite) TestFlatNoMiddleware(c *C) {
