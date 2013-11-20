@@ -39,11 +39,11 @@ func (ctx *AdminContext) SuggestionView(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintln(w, "r = ", r.UrlVariables)
 }
 
-
 func main() {
   router := web.New(Context{})
   router.Middleware(web.LoggerMiddleware).
          Middleware(web.ShowErrorsMiddleware).
+         Middleware(web.StaticMiddleware("public")).
          Middleware((*Context).SetRequestIdentifier)
   
   router.Get("/signin", (*Context).Signin)
