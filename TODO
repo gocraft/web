@@ -1,9 +1,5 @@
 
-TODO: 
- - refactor all validation methods
-   - good error messaging
-   - proper logging
- 
+TODO:
  - benchmarks
  
  - regex validation of segments. Multiple segments per node.
