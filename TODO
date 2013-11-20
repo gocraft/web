@@ -1,15 +1,21 @@
 
-TODO:
- - static file handling
- 
+TODO: 
  - refactor all validation methods
    - good error messaging
    - proper logging
  
  - benchmarks
  
+ - regex validation of segments. Multiple segments per node.
+ - Analyze gorilla/mux. See what other typs of conditions I can extract.
+   - host. schemes. headers. query params.
+ - trailing slash policy
+ 
+ - readme
+ 
  - do further routing tests. Test tree.go. Wildcards.
  - audit exported structures (appResponseWriter, for instance)
+ - write tests for router_setup
  - refactor tests to use assertResponse
 
  - ??? Unsure thoughts
