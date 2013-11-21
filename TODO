@@ -2,6 +2,7 @@
 TODO:
  - benchmarks
  
+ - do further routing tests. Test tree.go. Wildcards.
  - regex validation of segments. Multiple segments per node.
  - Analyze gorilla/mux. See what other typs of conditions I can extract.
    - host. schemes. headers. query params.
@@ -9,70 +10,44 @@ TODO:
  
  - readme
  
- - do further routing tests. Test tree.go. Wildcards.
  - audit exported structures (appResponseWriter, for instance)
  - write tests for router_setup
  - refactor tests to use assertResponse
 
  - ??? Unsure thoughts
    - Wrap the request with some stuff that gives you a nice view of the params
+   - helpers to render JSON
+   - helpers to do JSON crud
+   - static file server:
+     - slow: StaticMiddleware("public"), because all requests check filesystem
+     - But, most things aren't naked in public. They're in image, js, css. Or they're the favicon, or robots.txt
+     - StaticMiddleware("public", "favicon.ico", "robots.txt", "images", "javascripts", "stylesheets")
+     - If you go ahead and list root segments and files, then we can skip checking most requests
+
+Benchmarking:
+ - What scenarios do I want to benchmark?
+   - ALL scenarios will render "hello world"
+     - What about error scenarios?
+   - Fixed routes
+     - Most basic. 1 route, no middleware, render hello world
+     - Variable routes: 3 levels of hierarchy, with N/3 segments on each level, with N = 3, 30, 300, 3000
+   - Path variable routes:
+     - 4 levels: /forums/3/suggestions/9
+     - with and without numeric regex constraint
+   - Not found benchmark
+     - Could be a subtest of all of the above
+   - Exception benchmark
+   - Middleware
+     - 1, 3, 5 middleware
+   - Subrouters: depth. D=1, 2, 4.
+   - router.New().Get("/", func() string {return "hello world"})
+   - Look at mallocs
    
 
 
-Handlers:
-
-type MyContext struct {
-  RequestIdentifier string
-  Db *gorp.Db
-}
-
-func (c *MyContext) Signin(w web.ResponseWriter, r *http.Request) {
-  w.Fprintf("<html>...")
-}
-
-type AdminContext struct {
-  *MyContext
-  Admin *User
-}
-
-router = web.New(MyContext{})
-
-router.AddMiddleware((*MyContext).Utf8Sanitizer).
-       AddMiddleware((*MyContext).SetupConnections).
-       AddMiddleware((*MyContext).FindSubdomain)
-
-router.Get("/admin/signin", (*MyContext).Signin)
-router.Post("/admin/signin", (*MyContext).CreateSession)
-
-adminRouter := router.NewSubrouter(AdminContext{})
-adminRouter.Namespace("/admin").                      // All this does is prefix any inner route with "/admin"
-            AddMiddleware((*AdminContext).AdminRequired)
-
-adminRouter.Get("/users", (*AdminContext).UsersListHandler)
-adminRouter.Get("/users/:id(/\d.*/)", (*AdminContext).UsersShowHandler)
-adminRouter.Post("/users", (*AdminContext).UsersCreateHandler)
 
 
 
 
-// Idea
-type TicketsController struct {
-  *MyContext
-}
-adminRouter.Resources("tickets", TicketsController{}, "create", "update")
-adminRouter.JsonResources("tickets", TicketsController{}, "create", "update")
-// -> Assumes:
-func (t *TicketsController) Create() {
-
-}
-// funcs: Create, Update, List, Show, Edit, New, Delete
-
-General routing principles: order doesn't matter. Instead, we construct, a unique non-ambiguous routing tree
 
 
-- This is just a library, not a framework. It handles HTTP Request -> [web library] -> your function.
-                                                                        |-> your middleware/filters/callbacks
-- It does NOT handle view/templating or ORM concerns.
-- It WILL come with some utilities to auto-recompile source on page load, view errors in browser, etc
-- Can have multiple independent routers listening on different hosts / ports
--
