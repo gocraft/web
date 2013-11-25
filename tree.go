@@ -5,17 +5,22 @@ import (
 )
 
 type PathNode struct {
+  
+  // Given the next segment s, if edges[s] exists, then we'll look there first.
   edges    map[string]*PathNode
   
-  leaf *PathLeaf // If set, and we have nothing left to match, then we match on this node
+  // If set, failure to match on edges will match on wildcard
+  wildcard *PathNode
   
-  wildcard *PathNode    // If set, failure to match on edges will match on wildcard
-  
-  // Router/Namespace
+  // If set, and we have nothing left to match, then we match on this node
+  leaf *PathLeaf
 }
 
 type PathLeaf struct {
-  wildcards []string // names of wildcards that lead to this leaf. eg, ["category_id"] for the wildcard ":category_id"
+  // names of wildcards that lead to this leaf. eg, ["category_id"] for the wildcard ":category_id"
+  wildcards []string
+  
+  // Pointer back to the route
   route *Route
 }
 

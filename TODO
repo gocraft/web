@@ -21,6 +21,7 @@ TODO:
    - Wrap the request with some stuff that gives you a nice view of the params
    - helpers to render JSON
    - helpers to do JSON crud
+   - suffix capture (eg, /suggestions.:format)
    - static file server:
      - slow: StaticMiddleware("public"), because all requests check filesystem
      - But, most things aren't naked in public. They're in image, js, css. Or they're the favicon, or robots.txt
