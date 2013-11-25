@@ -46,7 +46,7 @@ func BenchmarkSimple(b *testing.B) {
 // PUT /resources/:id
 // DELETE /resources/:id
 // We'll have 3 namespaces. Each namespace will have N resource.
-const NUM_ROUTES = 50
+const NUM_ROUTES = 50 // You can vary this
 func BenchmarkRouting(b *testing.B) {
   namespaces := []string{"admin", "api", "site"}
   resources := []string{}
@@ -108,6 +108,46 @@ func BenchmarkRouting(b *testing.B) {
     reqId += 1
   }
   
+}
+
+// type BenchContext struct {}
+type BenchContextB struct {
+  *BenchContext
+}
+
+type BenchContextC struct {
+  *BenchContextB
+}
+
+// In this bench we want to test middleware.
+// Context: middleware stack with 3 levels of context
+// Each middleware has 2 functions which just call next()
+func BenchmarkMiddleware(b *testing.B) {
+  
+  nextMw := func(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+    next(w, r)
+  }
+  
+  router := web.New(BenchContext{})
+  router.Middleware(nextMw)
+  router.Middleware(nextMw)
+  routerB := router.Subrouter(BenchContextB{}, "/b")
+  routerB.Middleware(nextMw)
+  routerB.Middleware(nextMw)
+  routerC := routerB.Subrouter(BenchContextC{}, "/c")
+  routerC.Middleware(nextMw)
+  routerC.Middleware(nextMw)
+  routerC.Get("/action", func(w web.ResponseWriter, r *web.Request) {
+    fmt.Fprintf(w, "hello")
+  })
+  
+  rw, req := testRequest("GET", "/b/c/action")
+  
+  b.ResetTimer()
+  for i := 0; i < b.N; i++ {
+    router.ServeHTTP(rw, req)
+    // if rw.Code != 200 { panic("no good") }
+  }
 }
 
 
