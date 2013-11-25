@@ -1,7 +1,5 @@
 
 TODO:
- - benchmarks
- 
  - do further routing tests. Test tree.go. Wildcards.
  - regex validation of segments. Multiple segments per node.
  - Analyze gorilla/mux. See what other typs of conditions I can extract.
@@ -13,6 +11,11 @@ TODO:
  - audit exported structures (appResponseWriter, for instance)
  - write tests for router_setup
  - refactor tests to use assertResponse
+ 
+ - benchmarks:
+   - 404 benchmark -- fn(# routes)
+   - 500 benchmark
+   - regex benchmarks (when that feature exists)
 
  - ??? Unsure thoughts
    - Wrap the request with some stuff that gives you a nice view of the params
@@ -24,24 +27,6 @@ TODO:
      - StaticMiddleware("public", "favicon.ico", "robots.txt", "images", "javascripts", "stylesheets")
      - If you go ahead and list root segments and files, then we can skip checking most requests
 
-Benchmarking:
- - What scenarios do I want to benchmark?
-   - ALL scenarios will render "hello world"
-     - What about error scenarios?
-   - Fixed routes
-     - Most basic. 1 route, no middleware, render hello world
-     - Variable routes: 3 levels of hierarchy, with N/3 segments on each level, with N = 3, 30, 300, 3000
-   - Path variable routes:
-     - 4 levels: /forums/3/suggestions/9
-     - with and without numeric regex constraint
-   - Not found benchmark
-     - Could be a subtest of all of the above
-   - Exception benchmark
-   - Middleware
-     - 1, 3, 5 middleware
-   - Subrouters: depth. D=1, 2, 4.
-   - router.New().Get("/", func() string {return "hello world"})
-   - Look at mallocs
    
 
 
