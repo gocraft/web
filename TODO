@@ -1,10 +1,9 @@
 
 TODO:
- - do further routing tests. Test tree.go. Wildcards.
  - regex validation of segments. Multiple segments per node.
  - Analyze gorilla/mux. See what other typs of conditions I can extract.
    - host. schemes. headers. query params.
- - trailing slash policy
+ 
  
  - readme
  
@@ -22,6 +21,7 @@ TODO:
    - helpers to render JSON
    - helpers to do JSON crud
    - suffix capture (eg, /suggestions.:format)
+   - trailing slash policy
    - static file server:
      - slow: StaticMiddleware("public"), because all requests check filesystem
      - But, most things aren't naked in public. They're in image, js, css. Or they're the favicon, or robots.txt
