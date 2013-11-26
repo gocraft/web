@@ -2,6 +2,7 @@ package web
 
 import (
   "strings"
+  "regexp"
 )
 
 type PathNode struct {
@@ -13,12 +14,26 @@ type PathNode struct {
   wildcard *PathNode
   
   // If set, and we have nothing left to match, then we match on this node
-  leaf *PathLeaf
+  leaves []*PathLeaf
 }
 
+
+// For the route /admin/forums/:forum_id:\d.*/suggestions/:suggestion_id:\d.*
+// We'd have wildcards = ["forum_id", "suggestion_id"]
+//         and regexps = [/\d.*/, /\d.*/]
+// For the route /admin/forums/:forum_id/suggestions/:suggestion_id:\d.*
+// We'd have wildcards = ["forum_id", "suggestion_id"]
+//         and regexps = [nil, /\d.*/]
+// For the route /admin/forums/:forum_id/suggestions/:suggestion_id
+// We'd have wildcards = ["forum_id", "suggestion_id"]
+//         and regexps = nil
 type PathLeaf struct {
   // names of wildcards that lead to this leaf. eg, ["category_id"] for the wildcard ":category_id"
   wildcards []string
+  
+  // regexps corresponding to wildcards. If a segment has regexp contraint, its entry will be nil.
+  // If the route has no regexp contraints on any segments, then regexps will be nil.
+  regexps []*regexp.Regexp
   
   // Pointer back to the route
   route *Route
@@ -29,31 +44,38 @@ func newPathNode() *PathNode {
 }
 
 func (pn *PathNode) add(path string, route *Route) {
-  pn.addInternal(splitPath(path), route, nil)
+  pn.addInternal(splitPath(path), route, nil, nil)
 }
 
-func (pn *PathNode) addInternal(segments []string, route *Route, wildcards []string) {
+func (pn *PathNode) addInternal(segments []string, route *Route, wildcards []string, regexps []*regexp.Regexp) {
   if len(segments) == 0 {
-    if pn.leaf == nil {
-      pn.leaf = &PathLeaf{route: route, wildcards: wildcards}
-    } else {
-      panic("there's already a handler at this node")
+    allNilRegexps := true
+    for _, r := range regexps {
+      if r != nil {
+        allNilRegexps = false
+        break
+      }
     }
+    if allNilRegexps {
+      regexps = nil
+    }
+    pn.leaves = append(pn.leaves, &PathLeaf{route: route, wildcards: wildcards, regexps: regexps})
+    // TODO: ? detect if we have duplicate leaves. (eg, 2 routes that are exactly the same)
   } else { // len(segments) >= 1
     seg := segments[0]
-    wc, wcName := isWildcard(seg)
+    wc, wcName, wcRegexpStr := isWildcard(seg)
     if wc {
       if pn.wildcard == nil {
         pn.wildcard = newPathNode()
       }
-      pn.wildcard.addInternal(segments[1:], route, append(wildcards, wcName))
+      pn.wildcard.addInternal(segments[1:], route, append(wildcards, wcName), append(regexps, compileRegexp(wcRegexpStr)))
     } else {
       subPn, ok := pn.edges[seg]
       if !ok {
         subPn = newPathNode()
         pn.edges[seg] = subPn
       }
-      subPn.addInternal(segments[1:], route, wildcards)
+      subPn.addInternal(segments[1:], route, wildcards, regexps)
     }
   }
 }
@@ -69,11 +91,11 @@ func (pn *PathNode) Match(path string) (leaf *PathLeaf, wildcards map[string]str
 }
 
 // Segments is like ["admin", "users"] representing "/admin/users"
-// wildcards are the actual values accumulated when we match on a wildcard.
+// wildcardValues are the actual values accumulated when we match on a wildcard.
 func (pn *PathNode) match(segments []string, wildcardValues []string) (leaf *PathLeaf, wildcardMap map[string]string) {
   // Handle leaf nodes:
   if len(segments) == 0 {
-    return pn.leaf, makeWildcardMap(pn.leaf, wildcardValues)
+    return pn.leaves[0], makeWildcardMap(pn.leaves[0], wildcardValues)
   }
   
   var seg string
@@ -91,13 +113,19 @@ func (pn *PathNode) match(segments []string, wildcardValues []string) (leaf *Pat
   return leaf, wildcardMap
 }
 
-// key is a non-empty path segment like "admin" or ":category_id"
-// Returns true if it's a wildcard, and if it is, also returns it's name. Eg, (true, "category_id")
-func isWildcard(key string) (bool, string) {
+// key is a non-empty path segment like "admin" or ":category_id" or ":category_id:\d+"
+// Returns true if it's a wildcard, and if it is, also returns it's name / regexp.
+// Eg, (true, "category_id", "\d+")
+func isWildcard(key string) (bool, string, string) {
   if key[0] == ':' {
-    return true, key[1:]
+    substrs := strings.SplitN(key[1:], ":", 2)
+    if len(substrs) == 1 {
+      return true, substrs[0], ""
+    } else {
+      return true, substrs[0], substrs[1]
+    }
   } else {
-    return false, ""
+    return false, "", ""
   }
 }
 
@@ -137,4 +165,10 @@ func makeWildcardMap(leaf *PathLeaf, wildcards []string) map[string]string {
   return assoc
 }
 
-
+func compileRegexp(regStr string) *regexp.Regexp {
+  if regStr == "" {
+    return nil
+  }
+  
+  return regexp.MustCompile("^" + regStr + "$")
+}
