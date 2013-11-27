@@ -1,9 +1,6 @@
 
 TODO:
- - Analyze gorilla/mux. See what other typs of conditions I can extract.
-   - host/subdomain. schemes. headers. query params.
- 
- 
+
  - readme
  
  - audit exported structures (appResponseWriter, for instance)
@@ -26,6 +23,12 @@ TODO:
      - But, most things aren't naked in public. They're in image, js, css. Or they're the favicon, or robots.txt
      - StaticMiddleware("public", "favicon.ico", "robots.txt", "images", "javascripts", "stylesheets")
      - If you go ahead and list root segments and files, then we can skip checking most requests
+   - Router conditions:
+     - host/subdomain. schemes. headers. query params.
+     - eg, router.Host(":subdomain.uservoice.com").
+                  Scheme("https").
+                  Header("my-header", "my-value")
+     - But, this can easily / more flexibly be done with middleware.
 
    
 
