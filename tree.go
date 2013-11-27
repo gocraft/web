@@ -119,7 +119,22 @@ func (pn *PathNode) match(segments []string, wildcardValues []string) (leaf *Pat
 }
 
 func (leaf *PathLeaf) match(wildcardValues []string) bool {
+  if leaf.regexps == nil {
+    return true
+  }
   
+  // Invariant:
+  if len(leaf.regexps) != len(wildcardValues) {
+    panic("bug of some sort")
+  }
+  
+  for i, r := range leaf.regexps {
+    if r != nil {
+      if !r.MatchString(wildcardValues[i]) {
+        return false
+      }
+    }
+  }
   return true
 }
 
