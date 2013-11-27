@@ -91,6 +91,31 @@ func TestRoutes(t *testing.T) {
       get: "/c/d/ron/orange",
       vars: map[string]string{"seg1": "c", "seg2": "d", "apple": "orange"},
     },
+    {
+      route: "/site2/:id:\\d+",
+      get: "/site2/123",
+      vars: map[string]string{"id": "123"},
+    },
+    {
+      route: "/site2/:id:[a-z]+",
+      get: "/site2/abc",
+      vars: map[string]string{"id": "abc"},
+    },
+    {
+      route: "/site2/:id:\\d[a-z]+",
+      get: "/site2/1abc",
+      vars: map[string]string{"id": "1abc"},
+    },
+    {
+      route: "/site2/:id",
+      get: "/site2/1abc1",
+      vars: map[string]string{"id": "1abc1"},
+    },
+    {
+      route: "/site2/:id:\\d+/other/:var:[A-Z]+",
+      get: "/site2/123/other/OK",
+      vars: map[string]string{"id": "123", "var":"OK"},
+    },
   }
   
   // Create routes

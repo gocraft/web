@@ -52,7 +52,7 @@ func main() {
   
   adminRouter.Get("/users", (*AdminContext).UsersList)
   adminRouter.Get("/exception", (*AdminContext).Exception)
-  adminRouter.Get("/forums/:forum_id/suggestions/:suggestion_id", (*AdminContext).SuggestionView)
+  adminRouter.Get("/forums/:forum_id:\\d+/suggestions/:suggestion_id:[a-z]+", (*AdminContext).SuggestionView)
   
   err := http.ListenAndServe(":8080", router)
   if err != nil {
