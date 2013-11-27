@@ -1,3 +1,5 @@
+Result of running `go test speed_test.go -test.bench=.* -test.benchmem=true`
+
 
 2013/11/25 commit 49658cd6cd345d4e779a7033c6b5d1e3077f56f3
 BenchmarkSimple	  500000	      2760 ns/op	     537 B/op	      16 allocs/op

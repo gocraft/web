@@ -95,7 +95,12 @@ func (pn *PathNode) Match(path string) (leaf *PathLeaf, wildcards map[string]str
 func (pn *PathNode) match(segments []string, wildcardValues []string) (leaf *PathLeaf, wildcardMap map[string]string) {
   // Handle leaf nodes:
   if len(segments) == 0 {
-    return pn.leaves[0], makeWildcardMap(pn.leaves[0], wildcardValues)
+    for _, leaf := range pn.leaves {
+      if leaf.match(wildcardValues) {
+        return leaf, makeWildcardMap(leaf, wildcardValues)
+      }
+    }
+    return nil, nil
   }
   
   var seg string
@@ -111,6 +116,11 @@ func (pn *PathNode) match(segments []string, wildcardValues []string) (leaf *Pat
   }
   
   return leaf, wildcardMap
+}
+
+func (leaf *PathLeaf) match(wildcardValues []string) bool {
+  
+  return true
 }
 
 // key is a non-empty path segment like "admin" or ":category_id" or ":category_id:\d+"
