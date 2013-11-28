@@ -2,39 +2,33 @@
 
 Mars Web is a Go mux + middleware tool. We deal with casting and reflection so YOUR code can be statically typed. We play nicely with Go's built-in HTTP tools.
 
-## Example
+## Getting Started
 
-```go
-type MyContext struct {
-  User *User
-}
 
-func (c *MyContext) UserRequired(rw *web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
-  if c.User, ok := Db.Find(req.Get("user_id")); ok {
-    next()
-  } else {
-    rw.WriteHeader(http.StatusUnauthorized)
-  }
-}
+## Features
+* **Super Fast**. 
+* Your own contexts
+* Easy and Powerful routing
+* Middleware
+* Nested routers, contexts, and middleware.
+* Embrace Go's net/http package.
+* Minimal
 
-func (c *MyContext) ShowProfile(rw *web.ResponseWriter, req *web.Request) {
-  fmt.Fprintf(rw, "Hi, %s", c.User.Name)
-}
+## Performance
 
-router := web.New(MyContext{})
-router.Middleware((*MyContext).UserRequired)
-router.Get("/profile", (*MyContext).ShowProfile)
-http.ListenAndServe("localhost:8080", router)
-```
+## Structure
 
-Notice how the middleware and handlers are methods on our own custom structs. This lets us set variables in "before filters" and then read them in handlers, without any type assertions.
-
-## Installation
-
-```bash
-go get github.com/cypriss/mars_web
-```
+### Making your router
+### Your context
+### Routes and handlers
+### Middleware
+### Nested routers
+### Request lifecycle
+### Capturing path variables; regexp conditions
+### 404 handlers
+### 500 handlers
+### Included middleware
+### Starting your server
+## FAQ
 
 ## Thanks
-
-This is the result of reading many other excellent Go routing libraries, including: pilu/traffic, robfig/revel, gorilla/mux, and more.
