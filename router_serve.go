@@ -17,7 +17,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
   // Handle errors
   defer func() {
     if recovered := recover(); recovered != nil {
-      rootRouter.handlePanic(responseWriter, request, recovered) // TODO: that's wrong (used to be route.Router)
+      rootRouter.handlePanic(responseWriter, request, recovered)
     }
   }()
   
