@@ -25,7 +25,7 @@ One key design choice we've made is our choice of routing algorithm. Most compet
 ## Application Structure
 
 ### Making your router
-The first thing you need to do is make a new router. Routers serve ruquests and execute middleware.
+The first thing you need to do is make a new router. Routers serve requests and execute middleware.
 
 ```go
 router := web.New(YourContext{})
@@ -58,7 +58,7 @@ router.Get("/", (*YourContext).Root)
 What is that funny ```(*YourContext).Root``` notation? It's called a method expression. It lets your handlers look like this:
 
 ```go
-func (c *YourContext) Root(rw web.RequestWriter, req *web.Request) {
+func (c *YourContext) Root(rw web.ResponseWriter, req *web.Request) {
   if c.User != nil {
     fmt.Fprint(rw, "Hello,", c.User.Name)
   } else {
@@ -70,7 +70,7 @@ func (c *YourContext) Root(rw web.RequestWriter, req *web.Request) {
 All method expressions do is return a function that accepts the type as the first argument. So your handler can also look like this:
 
 ```go
-func Root(c *YourContext, rw web.RequestWriter, req *web.Request) {}
+func Root(c *YourContext, rw web.ResponseWriter, req *web.Request) {}
 ```
 
 Of course, if you don't need a context for a particluar action, you can also do that:
@@ -79,7 +79,7 @@ Of course, if you don't need a context for a particluar action, you can also do 
 func Root(rw web.ResponseWriter, req *web.Request) {}
 ```
 
-Note that handlers always need to accept two input parameters: web.RequestWriter, and *web.Request, both of which wrap the standard http.ResponseWriter and *http.Request, respectively.
+Note that handlers always need to accept two input parameters: web.ResponseWriter, and *web.Request, both of which wrap the standard http.ResponseWriter and *http.Request, respectively.
 
 ### Middleware
 You can add middleware to a router:
