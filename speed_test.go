@@ -23,6 +23,22 @@ func (c *BenchContext) Action(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintf(w, "hello")
 }
 
+func Baseline(w http.ResponseWriter, r *http.Request) {
+  fmt.Fprintf(w, "hello")
+}
+
+// Baseline: Lets just write hello without using any library.
+// So we can effectively 'subtract' this time from the other benchmarks.
+// It's a really small time: 165 ns/op in my test runs.
+func BenchmarkBaseline(b *testing.B) {
+  rw, req := testRequest("GET", "/action")
+  
+  b.ResetTimer()
+  for i := 0; i < b.N; i++ {
+    Baseline(rw, req)
+  }
+}
+
 // Simplest benchmark ever.
 // One router, one route. No middleware. Just calling the action.
 func BenchmarkSimple(b *testing.B) {
