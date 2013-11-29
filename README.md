@@ -79,10 +79,14 @@ func (c *YourContext) UserRequired(rw web.ResponseWriter, r *web.Request, next w
 
 ### Nested routers
 ### Request lifecycle
-1.  Execute middleware on the root router. We do this before we find a route!
-2.  Determine the target route on the target router.
+1.  Wrap the default Go http.ResponseWriter and http.Request in a web.ResponseWriter and web.Request, respectively (via structure embedding).
+2.  Allocate a new root context. This context is passed into your root middleware.
+3.  Execute middleware on the root router. We do this before we find a route!
+4.  After all of the root router's middleware is executed, we'll run a 'virtual' routing middleware that determine thes target route.
     *  If the there's no route found, we'll execute the NotFound handler if supplied. Otherwise, we'll write a 404 response and start unwinding the root middlware.
-3.  Other stuff
+5.  Now that we have a target route, we'll start executing middleware on the nested middleware leading up to the final target router/route.
+6.  After all middleware is executed, we'll run another 'virtual' middleware that invokes the final handler corresponding to the target route.
+7.  Unwind all middleware calls (if there's any code after next() in the middleware, obviously that's going to run at some point).
 
 ### Capturing path variables; regexp conditions
 ### 404 handlers
