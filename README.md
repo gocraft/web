@@ -7,16 +7,16 @@ Mars Web is a Go mux + middleware tool. We deal with casting and reflection so Y
 
 ## Features
 * **Super Fast**. 
-* Your own contexts
+* **Your own contexts**.
 * Easy and Powerful routing
 * Middleware
 * Nested routers, contexts, and middleware.
-* Embrace Go's net/http package.
-* Minimal
+* **Embrace Go's net/http package**. 
+* **Minimal**.
 
 ## Performance
 
-## Structure
+## Application Structure
 
 ### Making your router
 ```go
@@ -77,12 +77,17 @@ func (c *YourContext) UserRequired(rw web.ResponseWriter, r *web.Request, next w
 }
 ```
 
+```go
+func GenericMiddleware(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+  // ...
+}
+
 ### Nested routers
 ### Request lifecycle
 1.  Wrap the default Go http.ResponseWriter and http.Request in a web.ResponseWriter and web.Request, respectively (via structure embedding).
 2.  Allocate a new root context. This context is passed into your root middleware.
 3.  Execute middleware on the root router. We do this before we find a route!
-4.  After all of the root router's middleware is executed, we'll run a 'virtual' routing middleware that determine thes target route.
+4.  After all of the root router's middleware is executed, we'll run a 'virtual' routing middleware that determines the target route.
     *  If the there's no route found, we'll execute the NotFound handler if supplied. Otherwise, we'll write a 404 response and start unwinding the root middlware.
 5.  Now that we have a target route, we'll start executing middleware on the nested middleware leading up to the final target router/route.
 6.  After all middleware is executed, we'll run another 'virtual' middleware that invokes the final handler corresponding to the target route.
@@ -121,6 +126,10 @@ http.ListenAndServe("localhost:8080", router)
 ```
 
 ### Rendering responses
+
+### Other Thoughts
+* context can be the same between nestings
+
 
 ## FAQ
 
