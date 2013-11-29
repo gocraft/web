@@ -55,7 +55,7 @@ router.Patch("/users/:id", (*YourContext).UsersUpdate)
 router.Get("/", (*YourContext).Root)
 ```
 
-What is that funny ```(*YourContext).Root``` notation?
+What is that funny ```(*YourContext).Root``` notation? It's called a method expression. It lets your handlers look like this:
 
 ```go
 func (c *YourContext) Root(rw web.RequestWriter, req *web.Request) {
@@ -67,21 +67,30 @@ func (c *YourContext) Root(rw web.RequestWriter, req *web.Request) {
 }
 ```
 
+All method expressions do is return a function that accepts the type as the first argument. So your handler can also look like this:
+
 ```go
 func Root(c *YourContext, rw web.RequestWriter, req *web.Request) {}
 ```
 
+Of course, if you don't need a context for a particluar action, you can also do that:
+
 ```go
-func Signin(rw web.RequestWriter, req *web.Request) {}
+func Root(rw web.ResponseWriter, req *web.Request) {}
 ```
 
+Note that handlers always need to accept two input parameters: web.RequestWriter, and *web.Request, both of which wrap the standard http.ResponseWriter and *http.Request, respectively.
 
 ### Middleware
+You can add middleware to a router:
+
 ```go
 router := web.New(YourContext{})
 router.Middleware((*YourContext).UserRequired)
 // add routes, more middleware
 ```
+
+This is what a middleware handler looks like:
 
 ```go
 func (c *YourContext) UserRequired(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
@@ -97,10 +106,17 @@ func (c *YourContext) UserRequired(rw web.ResponseWriter, r *web.Request, next w
 }
 ```
 
+Some things to note about the above example:
+*  We set fields in the context for future middleware / handlers to use.
+*  We can call next(), or not. Not calling next() effectively stops the middleware stack.
+
+Of course, generic middleware without contexts are supported:
+
 ```go
 func GenericMiddleware(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
   // ...
 }
+```
 
 ### Nested routers
 ### Request lifecycle
