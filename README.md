@@ -10,11 +10,17 @@ Mars Web is a Go mux + middleware tool. We deal with casting and reflection so Y
 * **Your own contexts**. Easily pass information between your middleware and handler with strong static typing.
 * **Easy and Powerful routing**. Capture path variables. Validate path segments with regexps. Lovely API.
 * **Middleware**. Middleware can express almost any web-layer feature. We make it easy.
-* **Nested routers, contexts, and middleware**. Your app has an API, and admin area, and a logged out view. Each view needs different contexts and different middleware.
+* **Nested routers, contexts, and middleware**. Your app has an API, and admin area, and a logged out view. Each view needs different contexts and different middleware. We let you express this hierarchy naturally.
 * **Embrace Go's net/http package**. Start your server with http.ListenAndServe(), and work directly with http.ResponseWriter and http.Request.
 * **Minimal**. The core of Mars Web is lightweight and minimal. Add optional functionality with our built-in middleware, or write your own middleware.
 
 ## Performance
+Performance is a first class concern. Every update to this package has its performance measured and tracked in [BENCHMARK_RESULTS](https://www.github.com/cypriss/mars_web/BENCHMARK_RESULTS).
+
+For minimal 'hello world' style apps, added latency is about 3μs. This grows to about 10μs for more complex apps (6 middleware functions, 3 levels of contexts, 150+ routes).
+
+
+One key design choice we've made is our choice of routing algorithm. Most competing libraries use simple O(N) iteration over all routes to find a match. This is fine if you have only a handful of routes, but starts to break down as your app gets bigger. Mars Web uses a tree-based router which grows in complexity at O(log(N)).
 
 ## Application Structure
 
