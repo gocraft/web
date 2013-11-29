@@ -15,7 +15,7 @@ Mars Web is a Go mux + middleware tool. We deal with casting and reflection so Y
 * **Minimal**. The core of Mars Web is lightweight and minimal. Add optional functionality with our built-in middleware, or write your own middleware.
 
 ## Performance
-Performance is a first class concern. Every update to this package has its performance measured and tracked in [BENCHMARK_RESULTS](https://www.github.com/cypriss/mars_web/BENCHMARK_RESULTS).
+Performance is a first class concern. Every update to this package has its performance measured and tracked in [BENCHMARK_RESULTS](https://github.com/cypriss/mars_web/blob/master/BENCHMARK_RESULTS).
 
 For minimal 'hello world' style apps, added latency is about 3μs. This grows to about 10μs for more complex apps (6 middleware functions, 3 levels of contexts, 150+ routes).
 
@@ -25,23 +25,37 @@ One key design choice we've made is our choice of routing algorithm. Most compet
 ## Application Structure
 
 ### Making your router
-```go
-router := web.New(YourContext{})
-```
-### Your context
-```go
-type YourContext struct {
-  User *User // Assumes you've defined a User type
-}
-```
-### Routes and handlers
+The first thing you need to do is make a new router. Routers serve ruquests and execute middleware.
 
 ```go
 router := web.New(YourContext{})
-router.Get("/signin", (*YourContext).Signin)
-router.Post("/sessions", (*YourContext).CreateSession)
+```
+
+### Your context
+Wait, what is YourContext{} and why do you need it? It can be any struct you want it to be. Here's an example of one:
+
+```go
+type YourContext struct {
+  User *User // Assumes you've defined a User type as well
+}
+```
+
+Your context can be empty or it can have various fields in it. The fields can be whatever you want - it's your type! When a new request comes into the router, we'll allocate an instance of this struct and pass it to your middleware and handlers. This allows, for instance, a SetUser middleware to set a User field that can be read in the handlers.
+
+### Routes and handlers
+Once you have your router, you can add routes to it. Standard HTTP verbs are supported.
+
+```go
+router := web.New(YourContext{})
+router.Get("/users", (*YourContext).UsersList)
+router.Post("/users", (*YourContext).UsersCreate)
+router.Put("/users/:id", (*YourContext).UsersUpdate)
+router.Delete("/users/:id", (*YourContext).UsersDelete)
+router.Patch("/users/:id", (*YourContext).UsersUpdate)
 router.Get("/", (*YourContext).Root)
 ```
+
+What is that funny ```(*YourContext).Root``` notation?
 
 ```go
 func (c *YourContext) Root(rw web.RequestWriter, req *web.Request) {
