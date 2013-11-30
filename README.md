@@ -164,6 +164,8 @@ adminRouter.Get("/reports", (*AdminContext).Reports)
 Note that each time we make a subrouter, we need to supply the context as well as a path namespace. The context CAN be the same as the parent context, and the namespace CAN just be "/" for no namespace.
 
 ### Request lifecycle
+The following is a detailed account of the request lifecycle:
+
 1.  Wrap the default Go http.ResponseWriter and http.Request in a web.ResponseWriter and web.Request, respectively (via structure embedding).
 2.  Allocate a new root context. This context is passed into your root middleware.
 3.  Execute middleware on the root router. We do this before we find a route!
@@ -174,8 +176,47 @@ Note that each time we make a subrouter, we need to supply the context as well a
 7.  After all middleware is executed, we'll run another 'virtual' middleware that invokes the final handler corresponding to the target route.
 8.  Unwind all middleware calls (if there's any code after next() in the middleware, obviously that's going to run at some point).
 
-### Capturing path variables; regexp conditions
+### Capturing path params; regexp conditions
+You can capture path variables like this:
+
+```go
+router.Get("/suggestions/:suggestion_id/comments/:comment_id")
+```
+
+In your handler, you can access them like this:
+
+```go
+func (c *YourContext) Root(rw web.ResponseWriter, req *web.Request) {
+  fmt.Fprint(rw, "Suggestion ID:", req.PathParams["suggestion_id"])
+  fmt.Fprint(rw, "Comment ID:", req.PathParams["comment_id"])
+}
+```
+
+You can also validate the format of your path params with a regexp. For instance, to ensure the 'ids' start with a digit:
+
+```go
+router.Get("/suggestions/:suggestion_id:\\d.*/comments/:comment_id:\\d.*")
+```
+
+One thing you CANNOT currently do is use regexps outside of a path segment. For instance, optional path segments are not supported - you would have to define multiple routes that both point to the same handler. This design decision was made to enable efficient routing.
+
 ### 404 handlers
+If a route isn't found, by default we'll return a 404 status and render the text "Not Found".
+
+You can supply a custom 404 handler on your root router:
+
+```go
+router.NotFound((*Context).NotFound)
+```
+
+Your handler can optionally accept a pointer to the root context. NotFound handlers look like this:
+```go
+func (c *Context) NotFound(rw web.ResponseWriter, r *web.Request) {
+  rw.WriteHeader(http.StatusNotFound) // You probably want to return 404. But you can also redirect or do whatever you want.
+  fmt.Fprintf(rw, "My Not Found")     // Render you own HTML or something!
+}
+```
+
 ### 500 handlers
 ### Included middleware
 We ship with three basic pieces of middleware: a logger, an exception printer, and a static file server. To use them:
