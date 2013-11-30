@@ -2,7 +2,7 @@ package web_test
 
 import (
 	"fmt"
-	"github.com/cypriss/mars_web"
+	"github.com/gocraft/web"
 	. "launchpad.net/gocheck"
 	"net/http"
 	"net/http/httptest"

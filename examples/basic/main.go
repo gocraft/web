@@ -3,7 +3,7 @@ package main
 import (
   "fmt"
   "net/http"
-  "github.com/cypriss/mars_web"
+  "github.com/gocraft/web"
   "log"
 )
 

@@ -3,7 +3,7 @@ package web_test
 import (
 	"crypto/sha1"
 	"fmt"
-	"github.com/cypriss/mars_web"
+	"github.com/gocraft/web"
 	"io"
 	"net/http"
 	"net/http/httptest"
