@@ -75,7 +75,7 @@ func readErrorFileLines(filePath string, errorLine int) map[int]string {
 const panicPageTpl string = `
   <html>
     <head>
-      <title>Traffic Panic</title>
+      <title>Panic</title>
       <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
       <style>
       html, body{ padding: 0; margin: 0; }

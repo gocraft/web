@@ -210,6 +210,7 @@ router.NotFound((*Context).NotFound)
 ```
 
 Your handler can optionally accept a pointer to the root context. NotFound handlers look like this:
+
 ```go
 func (c *Context) NotFound(rw web.ResponseWriter, r *web.Request) {
   rw.WriteHeader(http.StatusNotFound) // You probably want to return 404. But you can also redirect or do whatever you want.
@@ -218,6 +219,25 @@ func (c *Context) NotFound(rw web.ResponseWriter, r *web.Request) {
 ```
 
 ### Error handlers
+By default, if there's a panic in middleware or a handler, we'll return a 500 status and render the text "Application Error".
+
+If you use the included middleware ```web.ShowErrorsMiddleware```, a panic will result in a pretty backtrace being rendered in HTML. This is great for development.
+
+You can also supply a custom Error handler on any router (not just the root router):
+
+```go
+router.Error((*Context).Error)
+```
+
+Your handler can optionally accept a pointer to their corresponding context. Error handlers look like this:
+
+```go
+func (c *Context) Error(rw web.ResponseWriter, r *web.Request, err interface{}) {
+  rw.WriteHeader(http.StatusInternalServerError)
+  fmt.Fprint(w, "Error", err)
+}
+```
+
 ### Included middleware
 We ship with three basic pieces of middleware: a logger, an exception printer, and a static file server. To use them:
 
@@ -248,9 +268,6 @@ http.ListenAndServe("localhost:8080", router)
 ```
 
 ### Rendering responses
-
-### Other Thoughts
-* context can be the same between nestings
 
 
 ## FAQ
