@@ -1,12 +1,12 @@
-# Mars Web
+# gocraft/web
 
-Mars Web is a Go mux and middleware package. We deal with casting and reflection so YOUR code can be statically typed. And we're fast.
+gocraft/web is a Go mux and middleware package. We deal with casting and reflection so YOUR code can be statically typed. And we're fast.
 
 ## Getting Started
 From your GOPATH:
 
 ```bash
-go get github.com/cypriss/mars_web
+go get github.com/gocraft/web
 ```
 
 Add a file ```server.go``` - for instance, ```src/myapp/server.go```
@@ -15,7 +15,7 @@ Add a file ```server.go``` - for instance, ```src/myapp/server.go```
 package main
 
 import (
-	"github.com/cypriss/mars_web"
+	"github.com/gocraft/web"
 	"fmt"
 	"net/http"
 	"strings"
@@ -57,15 +57,15 @@ go run src/myapp/server.go
 * **Middleware**. Middleware can express almost any web-layer feature. We make it easy.
 * **Nested routers, contexts, and middleware**. Your app has an API, and admin area, and a logged out view. Each view needs different contexts and different middleware. We let you express this hierarchy naturally.
 * **Embrace Go's net/http package**. Start your server with http.ListenAndServe(), and work directly with http.ResponseWriter and http.Request.
-* **Minimal**. The core of Mars Web is lightweight and minimal. Add optional functionality with our built-in middleware, or write your own middleware.
+* **Minimal**. The core of gocraft/web is lightweight and minimal. Add optional functionality with our built-in middleware, or write your own middleware.
 
 ## Performance
-Performance is a first class concern. Every update to this package has its performance measured and tracked in [BENCHMARK_RESULTS](https://github.com/cypriss/mars_web/blob/master/BENCHMARK_RESULTS).
+Performance is a first class concern. Every update to this package has its performance measured and tracked in [BENCHMARK_RESULTS](https://github.com/gocraft/web/blob/master/BENCHMARK_RESULTS).
 
 For minimal 'hello world' style apps, added latency is about 3μs. This grows to about 10μs for more complex apps (6 middleware functions, 3 levels of contexts, 150+ routes).
 
 
-One key design choice we've made is our choice of routing algorithm. Most competing libraries use simple O(N) iteration over all routes to find a match. This is fine if you have only a handful of routes, but starts to break down as your app gets bigger. Mars Web uses a tree-based router which grows in complexity at O(log(N)).
+One key design choice we've made is our choice of routing algorithm. Most competing libraries use simple O(N) iteration over all routes to find a match. This is fine if you have only a handful of routes, but starts to break down as your app gets bigger. We use a tree-based router which grows in complexity at O(log(N)).
 
 ## Application Structure
 
@@ -323,11 +323,12 @@ fmt.Fprintf(rw, "<html>I'm a web page!</html>")
 
 This is currently where the implementation of this library stops. I recommend you read the documention of [net/http](http://golang.org/pkg/net/http/).
 
-## Thanks
+## Thanks & Authors
 I use code/got inspirtation from these excellent libraries:
 *  [Revel](https://github.com/robfig/revel) - pathtree routing.
 *  [Traffic](https://github.com/pilu/traffic) - inspirtation, show errors middleware.
 *  [Martini](https://github.com/codegangsta/martini) - static file serving.
 *  [gorilla/mux](http://www.gorillatoolkit.org/pkg/mux) - inspiration.
 
-
+Written by:
+*  Jonathan Novak -- [https://github.com/cypriss](https://github.com/cypriss)
