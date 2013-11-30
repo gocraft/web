@@ -155,7 +155,7 @@ Some things to note about the above example:
 *  We set fields in the context for future middleware / handlers to use.
 *  We can call next(), or not. Not calling next() effectively stops the middleware stack.
 
-Of course, generic middleware without contexts are supported:
+Of course, generic middleware without contexts is supported:
 
 ```go
 func GenericMiddleware(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
