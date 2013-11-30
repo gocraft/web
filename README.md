@@ -15,7 +15,7 @@ Add a file ```server.go``` - for instance, ```src/myapp/server.go```
 package main
 
 import (
-  "github.com/cypriss/mars_web"
+	"github.com/cypriss/mars_web"
 	"fmt"
 	"net/http"
 	"strings"
@@ -104,11 +104,11 @@ What is that funny ```(*YourContext).Root``` notation? It's called a method expr
 
 ```go
 func (c *YourContext) Root(rw web.ResponseWriter, req *web.Request) {
-  if c.User != nil {
-    fmt.Fprint(rw, "Hello,", c.User.Name)
-  } else {
-    fmt.Fprint(rw, "Hello, anonymous person")
-  }
+	if c.User != nil {
+		fmt.Fprint(rw, "Hello,", c.User.Name)
+	} else {
+		fmt.Fprint(rw, "Hello, anonymous person")
+	}
 }
 ```
 
@@ -139,15 +139,15 @@ This is what a middleware handler looks like:
 
 ```go
 func (c *YourContext) UserRequired(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
-  user := userFromSession(r)  // Pretend like this is defined. It reads a session cookie and returns a *User or nil.
-  if user != nil {
-    c.User = user
-    next(rw, r)
-  } else {
+	user := userFromSession(r)  // Pretend like this is defined. It reads a session cookie and returns a *User or nil.
+	if user != nil {
+		c.User = user
+		next(rw, r)
+	} else {
 		rw.Header().Set("Location", "/")
 		rw.WriteHeader(http.StatusMovedPermanently)
-    // do NOT call next()
-  }
+		// do NOT call next()
+	}
 }
 ```
 
@@ -159,7 +159,7 @@ Of course, generic middleware without contexts are supported:
 
 ```go
 func GenericMiddleware(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
-  // ...
+	// ...
 }
 ```
 
@@ -173,17 +173,17 @@ Let's implement that. Your contexts would look like this:
 
 ```go
 type Context struct {
-  Session map[string]string
+	Session map[string]string
 }
 
 type AdminContext struct {
-  *Context
-  CurrentAdmin *User
+	*Context
+	CurrentAdmin *User
 }
 
 type ApiContext struct {
-  *Context
-  AccessToken string
+	*Context
+	AccessToken string
 }
 ```
 
@@ -232,8 +232,8 @@ In your handler, you can access them like this:
 
 ```go
 func (c *YourContext) Root(rw web.ResponseWriter, req *web.Request) {
-  fmt.Fprint(rw, "Suggestion ID:", req.PathParams["suggestion_id"])
-  fmt.Fprint(rw, "Comment ID:", req.PathParams["comment_id"])
+	fmt.Fprint(rw, "Suggestion ID:", req.PathParams["suggestion_id"])
+	fmt.Fprint(rw, "Comment ID:", req.PathParams["comment_id"])
 }
 ```
 
@@ -258,8 +258,8 @@ Your handler can optionally accept a pointer to the root context. NotFound handl
 
 ```go
 func (c *Context) NotFound(rw web.ResponseWriter, r *web.Request) {
-  rw.WriteHeader(http.StatusNotFound) // You probably want to return 404. But you can also redirect or do whatever you want.
-  fmt.Fprintf(rw, "My Not Found")     // Render you own HTML or something!
+	rw.WriteHeader(http.StatusNotFound) // You probably want to return 404. But you can also redirect or do whatever you want.
+	fmt.Fprintf(rw, "My Not Found")     // Render you own HTML or something!
 }
 ```
 
@@ -278,8 +278,8 @@ Your handler can optionally accept a pointer to their corresponding context. Err
 
 ```go
 func (c *Context) Error(rw web.ResponseWriter, r *web.Request, err interface{}) {
-  rw.WriteHeader(http.StatusInternalServerError)
-  fmt.Fprint(w, "Error", err)
+	rw.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprint(w, "Error", err)
 }
 ```
 
@@ -289,8 +289,8 @@ We ship with three basic pieces of middleware: a logger, an exception printer, a
 ```go
 router := web.New(Context{})
 router.Middleware(web.LoggerMiddleware).
-       Middleware(web.ShowErrorsMiddleware).
-       Middleware(web.StaticMiddleware("public")) // "public" is a directory to serve files from.
+	Middleware(web.ShowErrorsMiddleware).
+	Middleware(web.StaticMiddleware("public")) // "public" is a directory to serve files from.
 ```
 
 NOTE: You might not want to use web.ShowErrorsMiddleware in production. You can easily do something like this:
@@ -298,7 +298,7 @@ NOTE: You might not want to use web.ShowErrorsMiddleware in production. You can 
 router := web.New(Context{})
 router.Middleware(web.LoggerMiddleware)
 if MyEnvironment == "development" {
-  router.Middleware(web.ShowErrorsMiddleware)
+	router.Middleware(web.ShowErrorsMiddleware)
 }
 // ...
 ```
