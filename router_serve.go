@@ -64,10 +64,10 @@ func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
         // We could also 404 at this point: if so, run NotFound handlers and return.
         route, wildcardMap := calculateRoute(r, req)
         if route == nil {
-          rw.WriteHeader(http.StatusNotFound)
           if r.notFoundHandler.IsValid() {
             invoke(r.notFoundHandler, contexts[0], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
           } else {
+            rw.WriteHeader(http.StatusNotFound)
             fmt.Fprintf(rw, DefaultNotFoundResponse)
           }
           return
@@ -198,7 +198,6 @@ func (rootRouter *Router) handlePanic(rw *AppResponseWriter, req *Request, err i
   }
   
   if targetRouter.errorHandler.IsValid() {
-    rw.WriteHeader(http.StatusInternalServerError)
     invoke(targetRouter.errorHandler, context, []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(err)})
   } else {
     http.Error(rw, DefaultPanicResponse, http.StatusInternalServerError)

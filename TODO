@@ -6,6 +6,8 @@ TODO:
  - 404 handler: don't render 404?
  - 500 handler: don't render 500?
  
+ - go fmt
+ 
  - audit exported structures (appResponseWriter, for instance)
  - write tests for router_setup
  - refactor tests to use assertResponse

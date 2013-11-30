@@ -60,10 +60,12 @@ func (c *Context) ErrorMiddleware(w web.ResponseWriter, r *web.Request, next web
 }
 
 func (c *Context) ErrorHandler(w web.ResponseWriter, r *web.Request, err interface{}) {
+  w.WriteHeader(http.StatusInternalServerError)
   fmt.Fprintf(w, "My Error")
 }
 
 func (c *Context) ErrorHandlerSecondary(w web.ResponseWriter, r *web.Request, err interface{}) {
+  w.WriteHeader(http.StatusInternalServerError)
   fmt.Fprintf(w, "My Secondary Error")
 }
 
@@ -78,6 +80,7 @@ func (c *AdminContext) ErrorMiddleware(w web.ResponseWriter, r *web.Request, nex
 }
 
 func (c *AdminContext) ErrorHandler(w web.ResponseWriter, r *web.Request, err interface{}) {
+  w.WriteHeader(http.StatusInternalServerError)
   fmt.Fprintf(w, "Admin Error")
 }
 
@@ -87,6 +90,7 @@ func (c *AdminContext) ErrorAction(w web.ResponseWriter, r *web.Request) {
 }
 
 func (c *ApiContext) ErrorHandler(w web.ResponseWriter, r *web.Request, err interface{}) {
+  w.WriteHeader(http.StatusInternalServerError)
   fmt.Fprintf(w, "Api Error")
 }
 

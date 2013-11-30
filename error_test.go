@@ -12,6 +12,7 @@ type ErrorTestSuite struct {}
 var _ = Suite(&ErrorTestSuite{})
 
 func ErrorHandlerWithNoContext(w web.ResponseWriter, r *web.Request, err interface{}) {
+  w.WriteHeader(http.StatusInternalServerError)
   fmt.Fprintf(w, "Contextless Error")
 }
 

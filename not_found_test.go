@@ -31,6 +31,7 @@ func (s *NotFoundTestSuite) TestBadMethod(c *C) {
 
 
 func MyNotFoundHandler(rw web.ResponseWriter, r *web.Request) {
+  rw.WriteHeader(http.StatusNotFound)
   fmt.Fprintf(rw, "My Not Found")
 }
 
@@ -45,6 +46,7 @@ func (s *NotFoundTestSuite) TestWithHandler(c *C) {
 }
 
 func (c *Context) HandlerWithContext(rw web.ResponseWriter, r *web.Request) {
+  rw.WriteHeader(http.StatusNotFound)
   fmt.Fprintf(rw, "My Not Found With Context")
 }
 
