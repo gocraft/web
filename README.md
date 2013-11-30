@@ -15,8 +15,8 @@ Add a file ```server.go``` - for instance, ```src/myapp/server.go```
 package main
 
 import (
+  "github.com/cypriss/mars_web"
 	"fmt"
-	"github.com/cypriss/mars_web"
 	"net/http"
 	"strings"
 )
@@ -35,12 +35,12 @@ func (c *Context) SayHello(rw web.ResponseWriter, req *web.Request) {
 }
 
 func main() {
-	router := web.New(Context{}).
-		Middleware(web.LoggerMiddleware).     // Use some included middleware
-		Middleware(web.ShowErrorsMiddleware). // ...
-		Middleware((*Context).SetHelloCount).
-		Get("/", (*Context).SayHello)
-	http.ListenAndServe("localhost:3000", router)
+	router := web.New(Context{}).                 // Create your router
+		Middleware(web.LoggerMiddleware).           // Use some included middleware
+		Middleware(web.ShowErrorsMiddleware).       // ...
+		Middleware((*Context).SetHelloCount).       // Your own middleware!
+		Get("/", (*Context).SayHello)               // Add a route
+	http.ListenAndServe("localhost:3000", router) // Start the server!
 }
 ```
 
