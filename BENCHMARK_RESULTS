@@ -1,5 +1,4 @@
-Result of running `go test speed_test.go -test.bench=.* -test.benchmem=true`
-
+Result of running `go test speed_test.go -test.bench=.* -test.benchmem=true` on my 1.8 GHz Macbook Air:
 
 2013/11/27 commit 0991ee88750eb6b054c715ef03cf8f9fba47c6e5 (after implementing regexp segment conditions)
 BenchmarkSimple	  500000	      2749 ns/op	     537 B/op	      16 allocs/op
