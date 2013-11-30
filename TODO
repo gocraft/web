@@ -1,12 +1,9 @@
 
 TODO:
 
- - readme
- 
  - go fmt
  
  - audit exported structures (appResponseWriter, for instance)
- - write tests for router_setup
  - refactor tests to use assertResponse
  
  - benchmarks:
