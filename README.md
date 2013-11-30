@@ -1,6 +1,6 @@
 # Mars Web
 
-Mars Web is a Go mux + middleware tool. We deal with casting and reflection so YOUR code can be statically typed. We play nicely with Go's built-in HTTP tools.
+Mars Web is a Go mux and middleware package. We deal with casting and reflection so YOUR code can be statically typed. And we're fast.
 
 ## Getting Started
 From your GOPATH:
@@ -51,9 +51,9 @@ go run src/myapp/server.go
 ```
 
 ## Features
-* **Super Fast and Scalable**. Added latency is from 3-9μs per request. Routing performance is O(log(N)) in the number of routes.
+* **Super fast and scalable**. Added latency is from 3-9μs per request. Routing performance is O(log(N)) in the number of routes.
 * **Your own contexts**. Easily pass information between your middleware and handler with strong static typing.
-* **Easy and Powerful routing**. Capture path variables. Validate path segments with regexps. Lovely API.
+* **Easy and powerful routing**. Capture path variables. Validate path segments with regexps. Lovely API.
 * **Middleware**. Middleware can express almost any web-layer feature. We make it easy.
 * **Nested routers, contexts, and middleware**. Your app has an API, and admin area, and a logged out view. Each view needs different contexts and different middleware. We let you express this hierarchy naturally.
 * **Embrace Go's net/http package**. Start your server with http.ListenAndServe(), and work directly with http.ResponseWriter and http.Request.
