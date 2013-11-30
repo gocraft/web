@@ -1,8 +1,8 @@
 package web
 
 import (
-  "net/http"
-  "path/filepath"
+	"net/http"
+	"path/filepath"
 )
 
 // StaticMiddleware("public") returns proper middleware
@@ -14,14 +14,14 @@ func StaticMiddleware(path string) func(ResponseWriter, *Request, NextMiddleware
 		f, err := dir.Open(file)
 		if err != nil {
 			next(w, req)
-      return
+			return
 		}
 		defer f.Close()
 
 		fi, err := f.Stat()
 		if err != nil {
-      next(w, req)
-      return
+			next(w, req)
+			return
 		}
 
 		// Try to serve index.html
@@ -30,17 +30,17 @@ func StaticMiddleware(path string) func(ResponseWriter, *Request, NextMiddleware
 			f, err = dir.Open(file)
 			if err != nil {
 				next(w, req)
-        return
+				return
 			}
 			defer f.Close()
 
 			fi, err = f.Stat()
 			if err != nil || fi.IsDir() {
 				next(w, req)
-        return
+				return
 			}
 		}
-    
+
 		http.ServeContent(w, req.Request, file, fi.ModTime(), f)
 	}
 }
