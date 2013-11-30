@@ -3,7 +3,46 @@
 Mars Web is a Go mux + middleware tool. We deal with casting and reflection so YOUR code can be statically typed. We play nicely with Go's built-in HTTP tools.
 
 ## Getting Started
+From your GOPATH:
 
+```bash
+go get github.com/cypriss/mars_web
+```
+
+Add a file ```server.go``` - for instance, $GOPATH/src/myapp/server.go
+
+```go
+package main
+
+import (
+	"fmt"
+	"github.com/cypriss/mars_web"
+	"net/http"
+	"strings"
+)
+
+type Context struct {
+	HelloCount int
+}
+
+func (c *Context) SetHelloCount(rw web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
+	c.HelloCount = 3
+	next(rw, req)
+}
+
+func (c *Context) SayHello(rw web.ResponseWriter, req *web.Request) {
+	fmt.Fprint(rw, strings.Repeat("Hello ", c.HelloCount), "World!")
+}
+
+func main() {
+	router := web.New(Context{}).
+		Middleware(web.LoggerMiddleware).     // Use some included middleware
+		Middleware(web.ShowErrorsMiddleware). // ...
+		Middleware((*Context).SetHelloCount).
+		Get("/hello", (*Context).SayHello)
+	http.ListenAndServe("localhost:3000", router)
+}
+```
 
 ## Features
 * **Super Fast and Scalable**. Added latency is from 3-9μs per request. Routing performance is O(log(N)) in the number of routes.
@@ -271,7 +310,7 @@ http.ListenAndServe("localhost:8080", router)
 So now you routed a request to a handler. You have a web.ResponseWriter (http.ResponseWriter) and web.Request (http.Request). Now what?
 
 ```go
-// You can print to the response!
+// You can print to the ResponseWriter!
 fmt.Fprintf(rw, "<html>I'm a web page!</html>")
 ```
 

@@ -99,36 +99,37 @@ func (r *Router) NotFound(fn interface{}) {
   r.notFoundHandler = vfn
 }
 
-func (r *Router) Get(path string, fn interface{}) {
-  r.addRoute(HttpMethodGet, path, fn)
+func (r *Router) Get(path string, fn interface{}) *Router {
+  return r.addRoute(HttpMethodGet, path, fn)
 }
 
-func (r *Router) Post(path string, fn interface{}) {
-  r.addRoute(HttpMethodPost, path, fn)
+func (r *Router) Post(path string, fn interface{}) *Router {
+  return r.addRoute(HttpMethodPost, path, fn)
 }
 
-func (r *Router) Put(path string, fn interface{}) {
-  r.addRoute(HttpMethodPut, path, fn)
+func (r *Router) Put(path string, fn interface{}) *Router {
+  return r.addRoute(HttpMethodPut, path, fn)
 }
 
-func (r *Router) Delete(path string, fn interface{}) {
-  r.addRoute(HttpMethodDelete, path, fn)
+func (r *Router) Delete(path string, fn interface{}) *Router {
+  return r.addRoute(HttpMethodDelete, path, fn)
 }
 
-func (r *Router) Patch(path string, fn interface{}) {
-  r.addRoute(HttpMethodPatch, path, fn)
+func (r *Router) Patch(path string, fn interface{}) *Router {
+  return r.addRoute(HttpMethodPatch, path, fn)
 }
 
 // 
 // 
 // 
-func (r *Router) addRoute(method HttpMethod, path string, fn interface{}) {
+func (r *Router) addRoute(method HttpMethod, path string, fn interface{}) *Router {
   fnv := reflect.ValueOf(fn)
   validateHandler(fnv, r.contextType)
   fullPath := appendPath(r.pathPrefix, path)
   route := &Route{Method: method, Path: fullPath, Handler: fnv, Router: r}
   r.routes = append(r.routes, route)
   r.root[method].add(fullPath, route)
+  return r
 }
 
 //
