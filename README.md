@@ -142,7 +142,7 @@ type ApiContext struct {
 }
 ```
 
-Note that we embed a pointer to the root context in each subcontext. This is required.
+Note that we embed a pointer to the parent context in each subcontext. This is required.
 
 Now that we have our contexts, let's create our routers:
 
@@ -156,7 +156,9 @@ apiRouter.Get("/tickets", (*ApiContext).TicketsIndex)
 
 adminRouter := rootRouter.Subrouter(AdminContext{}, "/admin")
 adminRouter.Middleware((*AdminContext).AdminRequired)
-adminRouter.Get("/reports", (*AdminContext).Reports)  // Given the path namesapce for this router is "/admin", the full path of this route is "/admin/reports"
+
+// Given the path namesapce for this router is "/admin", the full path of this route is "/admin/reports"
+adminRouter.Get("/reports", (*AdminContext).Reports)
 ```
 
 Note that each time we make a subrouter, we need to supply the context as well as a path namespace. The context CAN be the same as the parent context, and the namespace CAN just be "/" for no namespace.
