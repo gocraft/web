@@ -200,10 +200,10 @@ router.Get("/suggestions/:suggestion_id:\\d.*/comments/:comment_id:\\d.*")
 
 One thing you CANNOT currently do is use regexps outside of a path segment. For instance, optional path segments are not supported - you would have to define multiple routes that both point to the same handler. This design decision was made to enable efficient routing.
 
-### 404 handlers
+### Not Found handlers
 If a route isn't found, by default we'll return a 404 status and render the text "Not Found".
 
-You can supply a custom 404 handler on your root router:
+You can supply a custom NotFound handler on your root router:
 
 ```go
 router.NotFound((*Context).NotFound)
@@ -217,7 +217,7 @@ func (c *Context) NotFound(rw web.ResponseWriter, r *web.Request) {
 }
 ```
 
-### 500 handlers
+### Error handlers
 ### Included middleware
 We ship with three basic pieces of middleware: a logger, an exception printer, and a static file server. To use them:
 
