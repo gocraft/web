@@ -211,15 +211,16 @@ Note that each time we make a subrouter, we need to supply the context as well a
 ### Request lifecycle
 The following is a detailed account of the request lifecycle:
 
-1.  Wrap the default Go http.ResponseWriter and http.Request in a web.ResponseWriter and web.Request, respectively (via structure embedding).
-2.  Allocate a new root context. This context is passed into your root middleware.
-3.  Execute middleware on the root router. We do this before we find a route!
-4.  After all of the root router's middleware is executed, we'll run a 'virtual' routing middleware that determines the target route.
+1.  A request comes in. Yay! (follow allong in ```router_serve.go``` if you'd like)
+2.  Wrap the default Go http.ResponseWriter and http.Request in a web.ResponseWriter and web.Request, respectively (via structure embedding).
+3.  Allocate a new root context. This context is passed into your root middleware.
+4.  Execute middleware on the root router. We do this before we find a route!
+5.  After all of the root router's middleware is executed, we'll run a 'virtual' routing middleware that determines the target route.
     *  If the there's no route found, we'll execute the NotFound handler if supplied. Otherwise, we'll write a 404 response and start unwinding the root middlware.
-5.  Now that we have a target route, we can allocate the context tree of the target router.
-6.  Start executing middleware on the nested middleware leading up to the final router/route.
-7.  After all middleware is executed, we'll run another 'virtual' middleware that invokes the final handler corresponding to the target route.
-8.  Unwind all middleware calls (if there's any code after next() in the middleware, obviously that's going to run at some point).
+6.  Now that we have a target route, we can allocate the context tree of the target router.
+7.  Start executing middleware on the nested middleware leading up to the final router/route.
+8.  After all middleware is executed, we'll run another 'virtual' middleware that invokes the final handler corresponding to the target route.
+9.  Unwind all middleware calls (if there's any code after next() in the middleware, obviously that's going to run at some point).
 
 ### Capturing path params; regexp conditions
 You can capture path variables like this:
