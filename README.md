@@ -9,7 +9,7 @@ From your GOPATH:
 go get github.com/cypriss/mars_web
 ```
 
-Add a file ```server.go``` - for instance, $GOPATH/src/myapp/server.go
+Add a file ```server.go``` - for instance, ```src/myapp/server.go```
 
 ```go
 package main
@@ -39,9 +39,15 @@ func main() {
 		Middleware(web.LoggerMiddleware).     // Use some included middleware
 		Middleware(web.ShowErrorsMiddleware). // ...
 		Middleware((*Context).SetHelloCount).
-		Get("/hello", (*Context).SayHello)
+		Get("/", (*Context).SayHello)
 	http.ListenAndServe("localhost:3000", router)
 }
+```
+
+Run the the server. It will be available on ```localhost:3000```:
+
+```bash
+go run src/myapp/server.go
 ```
 
 ## Features
