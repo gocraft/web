@@ -268,8 +268,20 @@ http.ListenAndServe("localhost:8080", router)
 ```
 
 ### Rendering responses
+So now you routed a request to a handler. You have a web.ResponseWriter (http.ResponseWriter) and web.Request (http.Request). Now what?
 
+```go
+// You can print to the response!
+fmt.Fprintf(rw, "<html>I'm a web page!</html>")
+```
 
-## FAQ
+This is currently where the implementation of this library stops. I recommend you read the documention of [net/http](http://golang.org/pkg/net/http/).
 
 ## Thanks
+I use code/got inspirtation from these excellent libraries:
+*  [Revel](https://github.com/robfig/revel) - pathtree routing.
+*  [Traffic](https://github.com/pilu/traffic) - inspirtation, show errors middleware.
+*  [Martini](https://github.com/codegangsta/martini) - static file serving.
+*  [gorilla/mux](http://www.gorillatoolkit.org/pkg/mux) - inspiration.
+
+
