@@ -36,7 +36,7 @@ func (ctx *AdminContext) Exception(w web.ResponseWriter, r *web.Request) {
 
 func (ctx *AdminContext) SuggestionView(w web.ResponseWriter, r *web.Request) {
   fmt.Fprintln(w, "SuggestionView: entered")
-  fmt.Fprintln(w, "r = ", r.UrlVariables)
+  fmt.Fprintln(w, "r = ", r.PathParams)
 }
 
 func main() {

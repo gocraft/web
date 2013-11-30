@@ -123,7 +123,7 @@ func TestRoutes(t *testing.T) {
     // func: ensure closure is created per iteraction (it fails otherwise)
     func(exp string) {
       router.Get(rt.route, func(w web.ResponseWriter, r *web.Request) {
-        w.Header().Set("X-VARS", stringifyMap(r.UrlVariables))
+        w.Header().Set("X-VARS", stringifyMap(r.PathParams))
         fmt.Fprintf(w, exp)
       })
     }(rt.route)

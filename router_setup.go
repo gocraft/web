@@ -84,13 +84,13 @@ func (r *Router) Middleware(fn interface{}) *Router {
   return r
 }
 
-func (r *Router) ErrorHandler(fn interface{}) {
+func (r *Router) Error(fn interface{}) {
   vfn := reflect.ValueOf(fn)
   validateErrorHandler(vfn, r.contextType)
   r.errorHandler = vfn
 }
 
-func (r *Router) NotFoundHandler(fn interface{}) {
+func (r *Router) NotFound(fn interface{}) {
   if r.parent != nil {
     panic("You can only set a NotFoundHandler on the root router.")
   }

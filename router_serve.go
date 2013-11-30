@@ -78,7 +78,7 @@ func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
         
         req.targetContext = contexts[len(contexts) - 1]
         req.route = route
-        req.UrlVariables = wildcardMap
+        req.PathParams = wildcardMap
       }
       
       currentMiddlewareIndex = 0

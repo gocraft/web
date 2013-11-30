@@ -36,7 +36,7 @@ func MyNotFoundHandler(rw web.ResponseWriter, r *web.Request) {
 
 func (s *NotFoundTestSuite) TestWithHandler(c *C) {
   router := web.New(Context{})
-  router.NotFoundHandler(MyNotFoundHandler)
+  router.NotFound(MyNotFoundHandler)
   
   rw, req := newTestRequest("GET", "/this_path_doesnt_exist")
   router.ServeHTTP(rw, req)
@@ -50,7 +50,7 @@ func (c *Context) HandlerWithContext(rw web.ResponseWriter, r *web.Request) {
 
 func (s *NotFoundTestSuite) TestWithRootContext(c *C) {
   router := web.New(Context{})
-  router.NotFoundHandler((*Context).HandlerWithContext)
+  router.NotFound((*Context).HandlerWithContext)
   
   rw, req := newTestRequest("GET", "/this_path_doesnt_exist")
   router.ServeHTTP(rw, req)
