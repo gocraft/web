@@ -275,7 +275,7 @@ You can also supply a custom Error handler on any router (not just the root rout
 router.Error((*Context).Error)
 ```
 
-Your handler can optionally accept a pointer to their corresponding context. Error handlers look like this:
+Your handler can optionally accept a pointer to its corresponding context. Error handlers look like this:
 
 ```go
 func (c *Context) Error(rw web.ResponseWriter, r *web.Request, err interface{}) {
