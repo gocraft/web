@@ -119,15 +119,58 @@ func GenericMiddleware(rw web.ResponseWriter, r *web.Request, next web.NextMiddl
 ```
 
 ### Nested routers
+Nested routers let you run different middleware and use different contexts for different parts of your app. Some common scenarios:
+*  You want to run an AdminRequired middleware on all your admin routes, but not on API routes. Your context needs a CurrentAdmin field.
+*  You want to run an OAuth middleware on your API routes. Your context needs an AccessToken field.
+*  You want to run session handling middleware on ALL your routes. Your context needs a Session field.
+
+Let's implement that. Your contexts would look like this:
+
+```go
+type Context struct {
+  Session map[string]string
+}
+
+type AdminContext struct {
+  *Context
+  CurrentAdmin *User
+}
+
+type ApiContext struct {
+  *Context
+  AccessToken string
+}
+```
+
+Note that we embed a pointer to the root context in each subcontext. This is required.
+
+Now that we have our contexts, let's create our routers:
+
+```go
+rootRouter := web.New(Context{})
+rootRouter.Middleware((*Context).LoadSession)
+
+apiRouter := rootRouter.Subrouter(ApiContext{}, "/api")
+apiRouter.Middleware((*ApiContext).OAuth)
+apiRouter.Get("/tickets", (*ApiContext).TicketsIndex)
+
+adminRouter := rootRouter.Subrouter(AdminContext{}, "/admin")
+adminRouter.Middleware((*AdminContext).AdminRequired)
+adminRouter.Get("/reports", (*AdminContext).Reports)  // Given the path namesapce for this router is "/admin", the full path of this route is "/admin/reports"
+```
+
+Note that each time we make a subrouter, we need to supply the context as well as a path namespace. The context CAN be the same as the parent context, and the namespace CAN just be "/" for no namespace.
+
 ### Request lifecycle
 1.  Wrap the default Go http.ResponseWriter and http.Request in a web.ResponseWriter and web.Request, respectively (via structure embedding).
 2.  Allocate a new root context. This context is passed into your root middleware.
 3.  Execute middleware on the root router. We do this before we find a route!
 4.  After all of the root router's middleware is executed, we'll run a 'virtual' routing middleware that determines the target route.
     *  If the there's no route found, we'll execute the NotFound handler if supplied. Otherwise, we'll write a 404 response and start unwinding the root middlware.
-5.  Now that we have a target route, we'll start executing middleware on the nested middleware leading up to the final target router/route.
-6.  After all middleware is executed, we'll run another 'virtual' middleware that invokes the final handler corresponding to the target route.
-7.  Unwind all middleware calls (if there's any code after next() in the middleware, obviously that's going to run at some point).
+5.  Now that we have a target route, we can allocate the context tree of the target router.
+6.  Start executing middleware on the nested middleware leading up to the final router/route.
+7.  After all middleware is executed, we'll run another 'virtual' middleware that invokes the final handler corresponding to the target route.
+8.  Unwind all middleware calls (if there's any code after next() in the middleware, obviously that's going to run at some point).
 
 ### Capturing path variables; regexp conditions
 ### 404 handlers
