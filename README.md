@@ -324,11 +324,11 @@ fmt.Fprintf(rw, "<html>I'm a web page!</html>")
 This is currently where the implementation of this library stops. I recommend you read the documention of [net/http](http://golang.org/pkg/net/http/).
 
 ## Thanks & Authors
-I use code/got inspirtation from these excellent libraries:
+I use code/got inspiration from these excellent libraries:
 *  [Revel](https://github.com/robfig/revel) - pathtree routing.
-*  [Traffic](https://github.com/pilu/traffic) - inspirtation, show errors middleware.
+*  [Traffic](https://github.com/pilu/traffic) - inspiration, show errors middleware.
 *  [Martini](https://github.com/codegangsta/martini) - static file serving.
 *  [gorilla/mux](http://www.gorillatoolkit.org/pkg/mux) - inspiration.
 
-Written by:
+Authors:
 *  Jonathan Novak -- [https://github.com/cypriss](https://github.com/cypriss)
