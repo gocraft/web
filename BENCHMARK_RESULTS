@@ -1,5 +1,16 @@
 Result of running `go test speed_test.go -test.bench=.* -test.benchmem=true` on my 1.8 GHz Macbook Air:
 
+2013/12/14 commit fb4b15ee25ce11e3ea583f38cecebec8979ebb12 (no functional changes; just revamping benches)
+BenchmarkGocraftWeb_Simple	 1000000	      2517 ns/op	     472 B/op	      16 allocs/op
+BenchmarkGocraftWeb_Route15	  500000	      3829 ns/op	     859 B/op	      20 allocs/op
+BenchmarkGocraftWeb_Route75	  500000	      3944 ns/op	     859 B/op	      20 allocs/op
+BenchmarkGocraftWeb_Route150	  500000	      3977 ns/op	     859 B/op	      20 allocs/op
+BenchmarkGocraftWeb_Route300	  500000	      3948 ns/op	     859 B/op	      20 allocs/op
+BenchmarkGocraftWeb_Route3000	  500000	      4492 ns/op	     860 B/op	      20 allocs/op
+BenchmarkGocraftWeb_Middleware	  200000	     11068 ns/op	    1683 B/op	      35 allocs/op
+BenchmarkGocraftWeb_Generic	  200000	      9336 ns/op	     913 B/op	      28 allocs/op
+BenchmarkGocraftWeb_Composite	  200000	     11572 ns/op	    1890 B/op	      34 allocs/op
+
 2013/11/27 commit 0991ee88750eb6b054c715ef03cf8f9fba47c6e5 (after implementing regexp segment conditions)
 BenchmarkSimple	  500000	      2749 ns/op	     537 B/op	      16 allocs/op
 BenchmarkRouting	  500000	      3915 ns/op	     843 B/op	      19 allocs/op
@@ -9,3 +20,7 @@ BenchmarkMiddleware	  200000	      9281 ns/op	     897 B/op	      27 allocs/op
 BenchmarkSimple	  500000	      2760 ns/op	     537 B/op	      16 allocs/op
 BenchmarkRouting	  500000	      3896 ns/op	     843 B/op	      19 allocs/op
 BenchmarkMiddleware	  200000	      9177 ns/op	     897 B/op	      27 allocs/op
+
+
+NOTES ON PROFILING:
+go test -bench=BenchmarkGocraftWeb_Composite -benchmem -memprofile mem.out
