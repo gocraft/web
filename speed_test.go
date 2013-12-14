@@ -10,40 +10,54 @@ import (
 	"testing"
 )
 
-func testRequest(method, path string) (*httptest.ResponseRecorder, *http.Request) {
-	request, _ := http.NewRequest(method, path, nil)
-	recorder := httptest.NewRecorder()
+//
+// Types used by any/all frameworks:
+//
+type RouterBuilder func(namespaces []string, resources []string) http.Handler
 
-	return recorder, request
+//
+// Benchmarks for gocraft/web:
+//
+type BenchContext struct {
+	MyField string
 }
-
-type BenchContext struct{}
+type BenchContextB struct {
+	*BenchContext
+}
+type BenchContextC struct {
+	*BenchContextB
+}
 
 func (c *BenchContext) Action(w web.ResponseWriter, r *web.Request) {
 	fmt.Fprintf(w, "hello")
 }
 
-func Baseline(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "hello")
+func (c *BenchContextB) Action(w web.ResponseWriter, r *web.Request) {
+	fmt.Fprintf(w, c.MyField)
 }
 
-// Baseline: Lets just write hello without using any library.
-// So we can effectively 'subtract' this time from the other benchmarks.
-// It's a really small time: 165 ns/op in my test runs.
-func BenchmarkBaseline(b *testing.B) {
-	rw, req := testRequest("GET", "/action")
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		Baseline(rw, req)
-	}
+func gocraftWebHandler(rw web.ResponseWriter, r *web.Request) {
+	fmt.Fprintf(rw, "hello")
 }
 
-// Simplest benchmark ever.
-// One router, one route. No middleware. Just calling the action.
-func BenchmarkSimple(b *testing.B) {
+func gocraftWebRouterFor(namespaces []string, resources []string) http.Handler {
 	router := web.New(BenchContext{})
-	router.Get("/action", (*BenchContext).Action)
+	for _, ns := range namespaces {
+		subrouter := router.Subrouter(BenchContext{}, "/"+ns)
+		for _, res := range resources {
+			subrouter.Get("/"+res, (*BenchContext).Action)
+			subrouter.Post("/"+res, (*BenchContext).Action)
+			subrouter.Get("/"+res+"/:id", (*BenchContext).Action)
+			subrouter.Put("/"+res+"/:id", (*BenchContext).Action)
+			subrouter.Delete("/"+res+"/:id", (*BenchContext).Action)
+		}
+	}
+	return router
+}
+
+func BenchmarkGocraftWeb_Simple(b *testing.B) {
+	router := web.New(BenchContext{})
+	router.Get("/action", gocraftWebHandler)
 
 	rw, req := testRequest("GET", "/action")
 
@@ -53,43 +67,111 @@ func BenchmarkSimple(b *testing.B) {
 	}
 }
 
-// Determine routing performance as a function of the # of routes.
-// We're going to use JSON restful routes here:
-// a given 'resource' will have index/show/create/update/delete:
-// GET /resources
-// GET /resources/:id
-// POST /resources
-// PUT /resources/:id
-// DELETE /resources/:id
-// We'll have 3 namespaces. Each namespace will have N resource.
-const NUM_ROUTES = 50 // You can vary this
-func BenchmarkRouting(b *testing.B) {
-	namespaces := []string{"admin", "api", "site"}
-	resources := []string{}
+func BenchmarkGocraftWeb_Route15(b *testing.B) {
+	benchmarkRoutesN(b, 1, gocraftWebRouterFor)
+}
 
-	for i := 0; i < NUM_ROUTES; i += 1 {
+func BenchmarkGocraftWeb_Route75(b *testing.B) {
+	benchmarkRoutesN(b, 5, gocraftWebRouterFor)
+}
+
+func BenchmarkGocraftWeb_Route150(b *testing.B) {
+	benchmarkRoutesN(b, 10, gocraftWebRouterFor)
+}
+
+func BenchmarkGocraftWeb_Route300(b *testing.B) {
+	benchmarkRoutesN(b, 20, gocraftWebRouterFor)
+}
+
+func BenchmarkGocraftWeb_Route3000(b *testing.B) {
+	benchmarkRoutesN(b, 200, gocraftWebRouterFor)
+}
+
+func BenchmarkGocraftWeb_Middleware(b *testing.B) {
+	nextMw := func(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+		next(rw, r)
+	}
+
+	router := web.New(BenchContext{})
+	router.Middleware(nextMw)
+	router.Middleware(nextMw)
+	routerB := router.Subrouter(BenchContextB{}, "/b")
+	routerB.Middleware(nextMw)
+	routerB.Middleware(nextMw)
+	routerC := routerB.Subrouter(BenchContextC{}, "/c")
+	routerC.Middleware(nextMw)
+	routerC.Middleware(nextMw)
+	routerC.Get("/action", gocraftWebHandler)
+
+	rw, req := testRequest("GET", "/b/c/action")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		router.ServeHTTP(rw, req)
+		// if rw.Code != 200 { panic("no good") }
+	}
+}
+
+func BenchmarkGocraftWeb_Composite(b *testing.B) {
+	namespaces, resources, requests := resourceSetup(10)
+
+	nextMw := func(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+		next(rw, r)
+	}
+
+	router := web.New(BenchContext{})
+	router.Middleware(func(c *BenchContext, rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+		c.MyField = r.URL.Path
+		next(rw, r)
+	})
+	router.Middleware(nextMw)
+	router.Middleware(nextMw)
+
+	for _, ns := range namespaces {
+		subrouter := router.Subrouter(BenchContextB{}, "/"+ns)
+		subrouter.Middleware(nextMw)
+		subrouter.Middleware(nextMw)
+		subrouter.Middleware(nextMw)
+		for _, res := range resources {
+			subrouter.Get("/"+res, (*BenchContextB).Action)
+			subrouter.Post("/"+res, (*BenchContextB).Action)
+			subrouter.Get("/"+res+"/:id", (*BenchContextB).Action)
+			subrouter.Put("/"+res+"/:id", (*BenchContextB).Action)
+			subrouter.Delete("/"+res+"/:id", (*BenchContextB).Action)
+		}
+	}
+	benchmarkRoutes(b, router, requests)
+}
+
+//
+// Helpers:
+//
+
+func testRequest(method, path string) (*httptest.ResponseRecorder, *http.Request) {
+	request, _ := http.NewRequest(method, path, nil)
+	recorder := httptest.NewRecorder()
+
+	return recorder, request
+}
+
+func benchmarkRoutesN(b *testing.B, N int, builder RouterBuilder) {
+	namespaces, resources, requests := resourceSetup(N)
+	router := builder(namespaces, resources)
+	benchmarkRoutes(b, router, requests)
+}
+
+// Returns a routeset with N *resources per namespace*. so N=1 gives about 15 routes
+func resourceSetup(N int) (namespaces []string, resources []string, requests []*http.Request) {
+	namespaces = []string{"admin", "api", "site"}
+	resources = []string{}
+
+	for i := 0; i < N; i += 1 {
 		sha1 := sha1.New()
 		io.WriteString(sha1, fmt.Sprintf("%d", i))
 		strResource := fmt.Sprintf("%x", sha1.Sum(nil))
 		resources = append(resources, strResource)
 	}
 
-	rootRouter := web.New(BenchContext{})
-
-	for _, ns := range namespaces {
-		subrouter := rootRouter.Subrouter(BenchContext{}, "/"+ns)
-
-		for _, res := range resources {
-			subrouter.Get("/"+res, (*BenchContext).Action)
-			subrouter.Post("/"+res, (*BenchContext).Action)
-			subrouter.Get("/"+res+"/:id", (*BenchContext).Action)
-			subrouter.Put("/"+res+"/:id", (*BenchContext).Action)
-			subrouter.Delete("/"+res+"/:id", (*BenchContext).Action)
-		}
-	}
-
-	recorder := httptest.NewRecorder()
-	requests := []*http.Request{}
 	for _, ns := range namespaces {
 		for _, res := range resources {
 			req, _ := http.NewRequest("GET", "/"+ns+"/"+res, nil)
@@ -105,62 +187,24 @@ func BenchmarkRouting(b *testing.B) {
 		}
 	}
 
-	reqId := 0
+	return
+}
 
+func benchmarkRoutes(b *testing.B, handler http.Handler, requests []*http.Request) {
+	recorder := httptest.NewRecorder()
+	reqId := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		if reqId >= len(requests) {
 			reqId = 0
 		}
 		req := requests[reqId]
+		handler.ServeHTTP(recorder, req)
 
-		rootRouter.ServeHTTP(recorder, req)
-
-		//if recorder.Code != 200 {
-		//  panic("wat")
-		//}
+		if recorder.Code != 200 {
+			panic("wat")
+		}
 
 		reqId += 1
-	}
-
-}
-
-// type BenchContext struct {}
-type BenchContextB struct {
-	*BenchContext
-}
-
-type BenchContextC struct {
-	*BenchContextB
-}
-
-// In this bench we want to test middleware.
-// Context: middleware stack with 3 levels of context
-// Each middleware has 2 functions which just call next()
-func BenchmarkMiddleware(b *testing.B) {
-
-	nextMw := func(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
-		next(w, r)
-	}
-
-	router := web.New(BenchContext{})
-	router.Middleware(nextMw)
-	router.Middleware(nextMw)
-	routerB := router.Subrouter(BenchContextB{}, "/b")
-	routerB.Middleware(nextMw)
-	routerB.Middleware(nextMw)
-	routerC := routerB.Subrouter(BenchContextC{}, "/c")
-	routerC.Middleware(nextMw)
-	routerC.Middleware(nextMw)
-	routerC.Get("/action", func(w web.ResponseWriter, r *web.Request) {
-		fmt.Fprintf(w, "hello")
-	})
-
-	rw, req := testRequest("GET", "/b/c/action")
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		router.ServeHTTP(rw, req)
-		// if rw.Code != 200 { panic("no good") }
 	}
 }
