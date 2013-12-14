@@ -36,6 +36,22 @@ func (c *BenchContextB) Action(w web.ResponseWriter, r *web.Request) {
 	fmt.Fprintf(w, c.MyField)
 }
 
+func (c *BenchContextC) Action(w web.ResponseWriter, r *web.Request) {
+	fmt.Fprintf(w, "hello")
+}
+
+func (c *BenchContext) Middleware(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+	next(rw, r)
+}
+
+func (c *BenchContextB) Middleware(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+	next(rw, r)
+}
+
+func (c *BenchContextC) Middleware(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+	next(rw, r)
+}
+
 func gocraftWebHandler(rw web.ResponseWriter, r *web.Request) {
 	fmt.Fprintf(rw, "hello")
 }
@@ -88,6 +104,28 @@ func BenchmarkGocraftWeb_Route3000(b *testing.B) {
 }
 
 func BenchmarkGocraftWeb_Middleware(b *testing.B) {
+	router := web.New(BenchContext{})
+	router.Middleware((*BenchContext).Middleware)
+	router.Middleware((*BenchContext).Middleware)
+	routerB := router.Subrouter(BenchContextB{}, "/b")
+	routerB.Middleware((*BenchContextB).Middleware)
+	routerB.Middleware((*BenchContextB).Middleware)
+	routerC := routerB.Subrouter(BenchContextC{}, "/c")
+	routerC.Middleware((*BenchContextC).Middleware)
+	routerC.Middleware((*BenchContextC).Middleware)
+	routerC.Get("/action", (*BenchContextC).Action)
+
+	rw, req := testRequest("GET", "/b/c/action")
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		router.ServeHTTP(rw, req)
+		// if rw.Code != 200 { panic("no good") }
+	}
+}
+
+// All middlweare/handlers don't accept context here.
+func BenchmarkGocraftWeb_Generic(b *testing.B) {
 	nextMw := func(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
 		next(rw, r)
 	}
@@ -112,26 +150,23 @@ func BenchmarkGocraftWeb_Middleware(b *testing.B) {
 	}
 }
 
+// Intended to be my "single metric". It does a bit of everything. 75 routes, middleware, and middleware -> handler communication.
 func BenchmarkGocraftWeb_Composite(b *testing.B) {
 	namespaces, resources, requests := resourceSetup(10)
-
-	nextMw := func(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
-		next(rw, r)
-	}
 
 	router := web.New(BenchContext{})
 	router.Middleware(func(c *BenchContext, rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
 		c.MyField = r.URL.Path
 		next(rw, r)
 	})
-	router.Middleware(nextMw)
-	router.Middleware(nextMw)
+	router.Middleware((*BenchContext).Middleware)
+	router.Middleware((*BenchContext).Middleware)
 
 	for _, ns := range namespaces {
 		subrouter := router.Subrouter(BenchContextB{}, "/"+ns)
-		subrouter.Middleware(nextMw)
-		subrouter.Middleware(nextMw)
-		subrouter.Middleware(nextMw)
+		subrouter.Middleware((*BenchContextB).Middleware)
+		subrouter.Middleware((*BenchContextB).Middleware)
+		subrouter.Middleware((*BenchContextB).Middleware)
 		for _, res := range resources {
 			subrouter.Get("/"+res, (*BenchContextB).Action)
 			subrouter.Post("/"+res, (*BenchContextB).Action)
