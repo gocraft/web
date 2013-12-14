@@ -44,7 +44,7 @@ func main() {
 }
 ```
 
-Run the the server. It will be available on ```localhost:3000```:
+Run the server. It will be available on ```localhost:3000```:
 
 ```bash
 go run src/myapp/server.go
@@ -118,7 +118,7 @@ All method expressions do is return a function that accepts the type as the firs
 func Root(c *YourContext, rw web.ResponseWriter, req *web.Request) {}
 ```
 
-Of course, if you don't need a context for a particluar action, you can also do that:
+Of course, if you don't need a context for a particular action, you can also do that:
 
 ```go
 func Root(rw web.ResponseWriter, req *web.Request) {}
@@ -211,7 +211,7 @@ Note that each time we make a subrouter, we need to supply the context as well a
 ### Request lifecycle
 The following is a detailed account of the request lifecycle:
 
-1.  A request comes in. Yay! (follow allong in ```router_serve.go``` if you'd like)
+1.  A request comes in. Yay! (follow along in ```router_serve.go``` if you'd like)
 2.  Wrap the default Go http.ResponseWriter and http.Request in a web.ResponseWriter and web.Request, respectively (via structure embedding).
 3.  Allocate a new root context. This context is passed into your root middleware.
 4.  Execute middleware on the root router. We do this before we find a route!
@@ -321,7 +321,7 @@ So now you routed a request to a handler. You have a web.ResponseWriter (http.Re
 fmt.Fprintf(rw, "<html>I'm a web page!</html>")
 ```
 
-This is currently where the implementation of this library stops. I recommend you read the documention of [net/http](http://golang.org/pkg/net/http/).
+This is currently where the implementation of this library stops. I recommend you read the documentation of [net/http](http://golang.org/pkg/net/http/).
 
 ## Thanks & Authors
 I use code/got inspiration from these excellent libraries:
