@@ -34,7 +34,8 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // The action invoking middleware is executed after all middleware. It executes the final handler.
 func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
 	// Where are we in the stack
-	routers := []*Router{r}
+	routers := make([]*Router, 1, r.maxChildrenDepth)
+	routers[0] = r
 	contexts := make([]reflect.Value, 1, r.maxChildrenDepth)
 	contexts[0] = reflect.New(r.contextType)
 	currentMiddlewareIndex := 0
@@ -74,7 +75,7 @@ func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
 					return
 				}
 
-				routers = routersFor(route)
+				routers = routersFor(route, routers)
 				contexts = contextsFor(contexts, routers)
 
 				req.targetContext = contexts[len(contexts)-1]
@@ -127,8 +128,9 @@ func calculateRoute(rootRouter *Router, req *Request) (*Route, map[string]string
 }
 
 // given the route (and target router), return [root router, child router, ..., leaf route's router]
-func routersFor(route *Route) []*Router {
-	var routers []*Router
+// Use the memory in routers to store this information
+func routersFor(route *Route, routers []*Router) []*Router {
+	routers = routers[:0]
 	curRouter := route.Router
 	for curRouter != nil {
 		routers = append(routers, curRouter)
