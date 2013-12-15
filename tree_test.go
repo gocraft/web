@@ -131,7 +131,6 @@ func TestRoutes(t *testing.T) {
 
 	// Execute them all:
 	for _, rt := range table {
-		fmt.Println("doing ", rt)
 		recorder := httptest.NewRecorder()
 		request, _ := http.NewRequest("GET", rt.get, nil)
 
