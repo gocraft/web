@@ -12,6 +12,9 @@ type middlewareClosure struct {
 	Request
 	Routers []*Router
 	Contexts []reflect.Value
+	currentMiddlewareIndex int
+	currentRouterIndex int
+	currentMiddlewareLen int
 }
 
 // This is the entry point for servering all requests
@@ -22,14 +25,12 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	//request := &Request{Request: r}
 	var closure middlewareClosure
 	closure.Request.Request = r
-	
 	closure.AppResponseWriter.ResponseWriter = rw
-	
-	
 	closure.Routers = make([]*Router, 1, rootRouter.maxChildrenDepth)
 	closure.Routers[0] = rootRouter
 	closure.Contexts = make([]reflect.Value, 1, rootRouter.maxChildrenDepth)
 	closure.Contexts[0] = reflect.New(rootRouter.contextType)
+	closure.currentMiddlewareLen = len(rootRouter.middleware)
 
 	closure.Request.rootContext = closure.Contexts[0]
 
@@ -53,16 +54,10 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // The action invoking middleware is executed after all middleware. It executes the final handler.
 func (r *Router) MiddlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 	// Where are we in the stack
-	
-	currentMiddlewareIndex := 0
-	currentRouterIndex := 0
-	currentMiddlewareLen := len(r.middleware)
-
-	
 
 	var next NextMiddlewareFunc // create self-referential anonymous function
 	next = func(rw ResponseWriter, req *Request) {
-		if currentRouterIndex >= len(closure.Routers) {
+		if closure.currentRouterIndex >= len(closure.Routers) {
 			return
 		}
 
@@ -71,11 +66,11 @@ func (r *Router) MiddlewareStack(closure *middlewareClosure) NextMiddlewareFunc 
 		//  - set currentMiddlewareIndex, currentRouterIndex, currentMiddlewareLen
 		//  - calculate route, setting routers/contexts, and fields in req.
 		var middleware reflect.Value
-		if currentMiddlewareIndex < currentMiddlewareLen {
-			middleware = closure.Routers[currentRouterIndex].middleware[currentMiddlewareIndex]
+		if closure.currentMiddlewareIndex < closure.currentMiddlewareLen {
+			middleware = closure.Routers[closure.currentRouterIndex].middleware[closure.currentMiddlewareIndex]
 		} else {
 			// We ran out of middleware on the current router
-			if currentRouterIndex == 0 {
+			if closure.currentRouterIndex == 0 {
 				// If we're still on the root router, it's time to actually figure out what the route is.
 				// Do so, and update the various variables.
 				// We could also 404 at this point: if so, run NotFound handlers and return.
@@ -98,29 +93,29 @@ func (r *Router) MiddlewareStack(closure *middlewareClosure) NextMiddlewareFunc 
 				req.PathParams = wildcardMap
 			}
 
-			currentMiddlewareIndex = 0
-			currentRouterIndex += 1
+			closure.currentMiddlewareIndex = 0
+			closure.currentRouterIndex += 1
 			routersLen := len(closure.Routers)
-			for currentRouterIndex < routersLen {
-				currentMiddlewareLen = len(closure.Routers[currentRouterIndex].middleware)
-				if currentMiddlewareLen > 0 {
+			for closure.currentRouterIndex < routersLen {
+				closure.currentMiddlewareLen = len(closure.Routers[closure.currentRouterIndex].middleware)
+				if closure.currentMiddlewareLen > 0 {
 					break
 				}
-				currentRouterIndex += 1
+				closure.currentRouterIndex += 1
 			}
-			if currentRouterIndex < routersLen {
-				middleware = closure.Routers[currentRouterIndex].middleware[currentMiddlewareIndex]
+			if closure.currentRouterIndex < routersLen {
+				middleware = closure.Routers[closure.currentRouterIndex].middleware[closure.currentMiddlewareIndex]
 			} else {
 				// We're done! invoke the action
 				invoke(req.route.Handler, closure.Contexts[len(closure.Contexts)-1], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
 			}
 		}
 
-		currentMiddlewareIndex += 1
+		closure.currentMiddlewareIndex += 1
 
 		// Invoke middleware.
 		if middleware.IsValid() {
-			invoke(middleware, closure.Contexts[currentRouterIndex], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(next)})
+			invoke(middleware, closure.Contexts[closure.currentRouterIndex], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(next)})
 		}
 	}
 
