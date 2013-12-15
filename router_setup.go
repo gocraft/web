@@ -21,6 +21,7 @@ type Router struct {
 	// Hierarchy:
 	parent   *Router // nil if root router.
 	children []*Router
+	maxChildrenDepth int
 
 	// For each request we'll create one of these objects
 	contextType reflect.Type
@@ -58,6 +59,7 @@ func New(ctx interface{}) *Router {
 	r := &Router{}
 	r.contextType = reflect.TypeOf(ctx)
 	r.pathPrefix = "/"
+	r.maxChildrenDepth = 1
 	r.root = make(map[HttpMethod]*PathNode)
 	for _, method := range HttpMethods {
 		r.root[method] = newPathNode()
@@ -71,6 +73,15 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 	// Create new router, link up hierarchy
 	newRouter := &Router{parent: r}
 	r.children = append(r.children, newRouter)
+	
+	// Increment maxChildrenDepth if this is the first child of the router
+	if len(r.children) == 1 {
+		curParent := r
+		for curParent != nil {
+			curParent.maxChildrenDepth = curParent.depth()
+			curParent = curParent.parent
+		}
+	}
 
 	newRouter.contextType = reflect.TypeOf(ctx)
 	newRouter.pathPrefix = appendPath(r.pathPrefix, pathPrefix)
@@ -132,6 +143,18 @@ func (r *Router) addRoute(method HttpMethod, path string, fn interface{}) *Route
 	r.routes = append(r.routes, route)
 	r.root[method].add(fullPath, route)
 	return r
+}
+
+// Calculates the max child depth of the node. Leaves return 1. For Parent->Child, Parent is 2.
+func (r *Router) depth() int {
+	max := 0
+	for _, child := range r.children {
+		childDepth := child.depth()
+		if childDepth > max {
+			max = childDepth
+		}
+	}
+	return max + 1
 }
 
 //

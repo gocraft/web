@@ -1,5 +1,8 @@
 Result of running `go test speed_test.go -test.bench=.* -test.benchmem=true` on my 1.8 GHz Macbook Air:
 
+In progress:
+
+
 2013/12/14 commit fb4b15ee25ce11e3ea583f38cecebec8979ebb12 (no functional changes; just revamping benches)
 BenchmarkGocraftWeb_Simple	 1000000	      2517 ns/op	     472 B/op	      16 allocs/op
 BenchmarkGocraftWeb_Route15	  500000	      3829 ns/op	     859 B/op	      20 allocs/op

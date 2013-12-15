@@ -35,7 +35,8 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
 	// Where are we in the stack
 	routers := []*Router{r}
-	contexts := []reflect.Value{reflect.New(r.contextType)}
+	contexts := make([]reflect.Value, 1, r.maxChildrenDepth)
+	contexts[0] = reflect.New(r.contextType)
 	currentMiddlewareIndex := 0
 	currentRouterIndex := 0
 	currentMiddlewareLen := len(r.middleware)
