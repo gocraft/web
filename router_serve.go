@@ -7,6 +7,7 @@ import (
 	"runtime"
 )
 
+// TODO: normalize the exportedness
 type middlewareClosure struct {
 	AppResponseWriter
 	Request
@@ -16,6 +17,7 @@ type middlewareClosure struct {
 	currentRouterIndex int
 	currentMiddlewareLen int
 	RootRouter *Router
+	Next NextMiddlewareFunc
 }
 
 // This is the entry point for servering all requests
@@ -46,7 +48,6 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	next(&closure.AppResponseWriter, &closure.Request)
 }
 
-// r should be the root router
 // This function executes the middleware stack. It does so creating/returning an anonymous function/closure.
 // This closure can be called multiple times (eg, next()). Each time it is called, the next middleware is called.
 // Each time a middleware is called, this 'next' function is passed into it, which will/might call it again.
@@ -54,10 +55,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // The route choosing middleware is executed after all root middleware. It picks the route.
 // The action invoking middleware is executed after all middleware. It executes the final handler.
 func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
-	// Where are we in the stack
-
-	var next NextMiddlewareFunc // create self-referential anonymous function
-	next = func(rw ResponseWriter, req *Request) {
+	closure.Next = func(rw ResponseWriter, req *Request) {
 		if closure.currentRouterIndex >= len(closure.Routers) {
 			return
 		}
@@ -116,11 +114,11 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 
 		// Invoke middleware.
 		if middleware.IsValid() {
-			invoke(middleware, closure.Contexts[closure.currentRouterIndex], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(next)})
+			invoke(middleware, closure.Contexts[closure.currentRouterIndex], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(closure.Next)})
 		}
 	}
 
-	return next
+	return closure.Next
 }
 
 func calculateRoute(rootRouter *Router, req *Request) (*Route, map[string]string) {
