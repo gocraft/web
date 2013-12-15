@@ -6,9 +6,30 @@ import (
 	"os"
 	"log"
 	"runtime/pprof"
-	"net/http/httptest"
+	// "net/http/httptest"
 	"net/http"
+	"runtime"
 )
+
+//
+// Null response writer
+//
+type NullWriter struct {}
+
+func (w *NullWriter) Header() http.Header {
+	return nil
+}
+
+
+func (w *NullWriter) Write(data []byte) (n int, err error) {
+	return len(data), nil
+}
+
+func (w *NullWriter) WriteHeader(statusCode int) {}
+
+//
+// Simple app with middleware
+//
 
 type Context struct {
 	
@@ -23,10 +44,7 @@ func (c *Context) Middleware(w web.ResponseWriter, r *web.Request, next web.Next
 }
 
 func main() {
-	f, err := os.Create("mycpuprof.out")
-	if err != nil {
-	    log.Fatal(err)
-	}
+	runtime.MemProfileRate = 1
 	
 	router := web.New(Context{}).
 		Middleware((*Context).Middleware).
@@ -37,18 +55,22 @@ func main() {
 		Middleware((*Context).Middleware).
 		Get("/action", (*Context).Action)
 	
-	rw := httptest.NewRecorder()
+	rw := &NullWriter{}
 	req, _ := http.NewRequest("GET", "/action", nil)
 	
 	
-	pprof.StartCPUProfile(f)
-	defer pprof.StopCPUProfile()
+	// pprof.StartCPUProfile(f)
+	// defer pprof.StopCPUProfile()
 	
-	
-	
-	
-	for i := 0; i < 1000000; i += 1 {
+	for i := 0; i < 1; i += 1 {
 		router.ServeHTTP(rw, req)
 	}
 	
+	f, err := os.Create("myprof.out")
+	if err != nil {
+	    log.Fatal(err)
+	}
+	
+	pprof.WriteHeapProfile(f)
+	f.Close()
 }

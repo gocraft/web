@@ -24,3 +24,5 @@ BenchmarkMiddleware	  200000	      9177 ns/op	     897 B/op	      27 allocs/op
 
 NOTES ON PROFILING:
 go test -bench=BenchmarkGocraftWeb_Composite -benchmem -memprofile mem.out
+go tool pprof web.test mem.out
+rm myprof* && go build -o myprof examples/prof/main.go && ./myprof && go tool pprof myprof myprof.out
