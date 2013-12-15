@@ -106,7 +106,11 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 				middleware = closure.Routers[closure.currentRouterIndex].middleware[closure.currentMiddlewareIndex]
 			} else {
 				// We're done! invoke the action
-				invoke(req.route.Handler, closure.Contexts[len(closure.Contexts)-1], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
+				if req.route.Handler.Generic {
+					req.route.Handler.GenericHandler(rw, req)
+				} else {
+					req.route.Handler.DynamicHandler.Call([]reflect.Value{closure.Contexts[len(closure.Contexts)-1], reflect.ValueOf(rw), reflect.ValueOf(req)})
+				}
 			}
 		}
 

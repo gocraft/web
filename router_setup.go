@@ -48,7 +48,7 @@ type Route struct {
 	Router  *Router
 	Method  HttpMethod
 	Path    string
-	Handler reflect.Value // Dynamic method sig.
+	Handler actionHandler
 }
 
 type middlewareHandler struct {
@@ -57,8 +57,16 @@ type middlewareHandler struct {
 	GenericMiddleware GenericMiddleware
 }
 
+type actionHandler struct {
+	Generic bool
+	DynamicHandler reflect.Value
+	GenericHandler GenericHandler
+}
+
+
 type NextMiddlewareFunc func(ResponseWriter, *Request)
 type GenericMiddleware func(ResponseWriter, *Request, NextMiddlewareFunc)
+type GenericHandler func(ResponseWriter, *Request)
 
 func New(ctx interface{}) *Router {
 	validateContext(ctx, nil)
@@ -148,10 +156,15 @@ func (r *Router) Patch(path string, fn interface{}) *Router {
 //
 //
 func (r *Router) addRoute(method HttpMethod, path string, fn interface{}) *Router {
-	fnv := reflect.ValueOf(fn)
-	validateHandler(fnv, r.contextType)
+	vfn := reflect.ValueOf(fn)
+	validateHandler(vfn, r.contextType)
 	fullPath := appendPath(r.pathPrefix, path)
-	route := &Route{Method: method, Path: fullPath, Handler: fnv, Router: r}
+	route := &Route{Method: method, Path: fullPath, Router: r}
+	if vfn.Type().NumIn() == 2 {
+		route.Handler = actionHandler{Generic: true, GenericHandler: fn.(func(ResponseWriter, *Request))}
+	} else {
+		route.Handler = actionHandler{Generic: false, DynamicHandler: vfn}
+	}
 	r.routes = append(r.routes, route)
 	r.root[method].add(fullPath, route)
 	return r
