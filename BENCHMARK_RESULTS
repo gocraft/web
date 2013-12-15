@@ -1,15 +1,15 @@
 Result of running `go test speed_test.go -test.bench=.* -test.benchmem=true` on my 1.8 GHz Macbook Air:
 
 In progress:
-BenchmarkGocraftWeb_Simple	 1000000	      2281 ns/op	     429 B/op	      13 allocs/op
-BenchmarkGocraftWeb_Route15	  500000	      3308 ns/op	     773 B/op	      15 allocs/op
-BenchmarkGocraftWeb_Route75	  500000	      3506 ns/op	     773 B/op	      15 allocs/op
-BenchmarkGocraftWeb_Route150	  500000	      3430 ns/op	     773 B/op	      15 allocs/op
-BenchmarkGocraftWeb_Route300	  500000	      3554 ns/op	     773 B/op	      15 allocs/op
-BenchmarkGocraftWeb_Route3000	  500000	      3934 ns/op	     773 B/op	      15 allocs/op
-BenchmarkGocraftWeb_Middleware	  200000	     11669 ns/op	    1507 B/op	      28 allocs/op
-BenchmarkGocraftWeb_Generic	  200000	      8679 ns/op	     744 B/op	      21 allocs/op
-BenchmarkGocraftWeb_Composite	  200000	     11131 ns/op	    1797 B/op	      29 allocs/op
+BenchmarkGocraftWeb_Simple	 1000000	      2042 ns/op	     366 B/op	       8 allocs/op
+BenchmarkGocraftWeb_Route15	  500000	      3203 ns/op	     713 B/op	      10 allocs/op
+BenchmarkGocraftWeb_Route75	  500000	      3237 ns/op	     713 B/op	      10 allocs/op
+BenchmarkGocraftWeb_Route150	  500000	      3231 ns/op	     713 B/op	      10 allocs/op
+BenchmarkGocraftWeb_Route300	  500000	      3263 ns/op	     713 B/op	      10 allocs/op
+BenchmarkGocraftWeb_Route3000	  500000	      3719 ns/op	     713 B/op	      10 allocs/op
+BenchmarkGocraftWeb_Middleware	  200000	      9148 ns/op	     862 B/op	      17 allocs/op
+BenchmarkGocraftWeb_Generic	  200000	      8229 ns/op	     680 B/op	      16 allocs/op
+BenchmarkGocraftWeb_Composite	  200000	     10038 ns/op	    1152 B/op	      18 allocs/op
 
 2013/12/14 commit fb4b15ee25ce11e3ea583f38cecebec8979ebb12 (no functional changes; just revamping benches)
 BenchmarkGocraftWeb_Simple	 1000000	      2517 ns/op	     472 B/op	      16 allocs/op

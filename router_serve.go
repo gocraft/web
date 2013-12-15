@@ -114,7 +114,15 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 
 		// Invoke middleware.
 		if middleware.IsValid() {
-			invoke(middleware, closure.Contexts[closure.currentRouterIndex], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(closure.Next)})
+			//invoke(middleware, closure.Contexts[closure.currentRouterIndex], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(closure.Next)})
+			////
+			handlerType := middleware.Type()
+			numIn := handlerType.NumIn()
+			if numIn == 3 {
+				middleware.Call([]reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(closure.Next)})
+			} else {
+				middleware.Call([]reflect.Value{closure.Contexts[closure.currentRouterIndex], reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(closure.Next)})
+			}
 		}
 	}
 
