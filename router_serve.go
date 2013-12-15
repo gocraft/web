@@ -7,22 +7,41 @@ import (
 	"runtime"
 )
 
+type middlewareClosure struct {
+	AppResponseWriter
+	Request
+	Routers []*Router
+	Contexts []reflect.Value
+}
+
 // This is the entry point for servering all requests
 func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	// Wrap the request and writer.
-	responseWriter := &AppResponseWriter{ResponseWriter: rw}
-	request := &Request{Request: r}
+	//responseWriter := &AppResponseWriter{ResponseWriter: rw}
+	//request := &Request{Request: r}
+	var closure middlewareClosure
+	closure.Request.Request = r
+	
+	closure.AppResponseWriter.ResponseWriter = rw
+	
+	
+	closure.Routers = make([]*Router, 1, rootRouter.maxChildrenDepth)
+	closure.Routers[0] = rootRouter
+	closure.Contexts = make([]reflect.Value, 1, rootRouter.maxChildrenDepth)
+	closure.Contexts[0] = reflect.New(rootRouter.contextType)
+
+	closure.Request.rootContext = closure.Contexts[0]
 
 	// Handle errors
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			rootRouter.handlePanic(responseWriter, request, recovered)
+			rootRouter.handlePanic(&closure.AppResponseWriter, &closure.Request, recovered)
 		}
 	}()
 
-	next := rootRouter.MiddlewareStack(request)
-	next(responseWriter, request)
+	next := rootRouter.MiddlewareStack(&closure)
+	next(&closure.AppResponseWriter, &closure.Request)
 }
 
 // r should be the root router
@@ -32,22 +51,18 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // There are two 'virtual' middlewares in this stack: the route choosing middleware, and the action invoking middleware.
 // The route choosing middleware is executed after all root middleware. It picks the route.
 // The action invoking middleware is executed after all middleware. It executes the final handler.
-func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
+func (r *Router) MiddlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 	// Where are we in the stack
-	routers := make([]*Router, 1, r.maxChildrenDepth)
-	routers[0] = r
-	contexts := make([]reflect.Value, 1, r.maxChildrenDepth)
-	contexts[0] = reflect.New(r.contextType)
+	
 	currentMiddlewareIndex := 0
 	currentRouterIndex := 0
 	currentMiddlewareLen := len(r.middleware)
 
-	request.rootContext = contexts[0]
+	
 
 	var next NextMiddlewareFunc // create self-referential anonymous function
-	var nextValue reflect.Value
 	next = func(rw ResponseWriter, req *Request) {
-		if currentRouterIndex >= len(routers) {
+		if currentRouterIndex >= len(closure.Routers) {
 			return
 		}
 
@@ -57,7 +72,7 @@ func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
 		//  - calculate route, setting routers/contexts, and fields in req.
 		var middleware reflect.Value
 		if currentMiddlewareIndex < currentMiddlewareLen {
-			middleware = routers[currentRouterIndex].middleware[currentMiddlewareIndex]
+			middleware = closure.Routers[currentRouterIndex].middleware[currentMiddlewareIndex]
 		} else {
 			// We ran out of middleware on the current router
 			if currentRouterIndex == 0 {
@@ -67,7 +82,7 @@ func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
 				route, wildcardMap := calculateRoute(r, req)
 				if route == nil {
 					if r.notFoundHandler.IsValid() {
-						invoke(r.notFoundHandler, contexts[0], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
+						invoke(r.notFoundHandler, closure.Contexts[0], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
 					} else {
 						rw.WriteHeader(http.StatusNotFound)
 						fmt.Fprintf(rw, DefaultNotFoundResponse)
@@ -75,29 +90,29 @@ func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
 					return
 				}
 
-				routers = routersFor(route, routers)
-				contexts = contextsFor(contexts, routers)
+				closure.Routers = routersFor(route, closure.Routers)
+				closure.Contexts = contextsFor(closure.Contexts, closure.Routers)
 
-				req.targetContext = contexts[len(contexts)-1]
+				req.targetContext = closure.Contexts[len(closure.Contexts)-1]
 				req.route = route
 				req.PathParams = wildcardMap
 			}
 
 			currentMiddlewareIndex = 0
 			currentRouterIndex += 1
-			routersLen := len(routers)
+			routersLen := len(closure.Routers)
 			for currentRouterIndex < routersLen {
-				currentMiddlewareLen = len(routers[currentRouterIndex].middleware)
+				currentMiddlewareLen = len(closure.Routers[currentRouterIndex].middleware)
 				if currentMiddlewareLen > 0 {
 					break
 				}
 				currentRouterIndex += 1
 			}
 			if currentRouterIndex < routersLen {
-				middleware = routers[currentRouterIndex].middleware[currentMiddlewareIndex]
+				middleware = closure.Routers[currentRouterIndex].middleware[currentMiddlewareIndex]
 			} else {
 				// We're done! invoke the action
-				invoke(req.route.Handler, contexts[len(contexts)-1], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
+				invoke(req.route.Handler, closure.Contexts[len(closure.Contexts)-1], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
 			}
 		}
 
@@ -105,10 +120,9 @@ func (r *Router) MiddlewareStack(request *Request) NextMiddlewareFunc {
 
 		// Invoke middleware.
 		if middleware.IsValid() {
-			invoke(middleware, contexts[currentRouterIndex], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), nextValue})
+			invoke(middleware, closure.Contexts[currentRouterIndex], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(next)})
 		}
 	}
-	nextValue = reflect.ValueOf(next)
 
 	return next
 }
