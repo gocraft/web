@@ -30,7 +30,7 @@ type Router struct {
 	pathPrefix string
 
 	// Routeset contents:
-	middleware []reflect.Value
+	middleware []*middlewareHandler
 	routes     []*Route
 
 	// The root pathnode is the same for a tree of Routers
@@ -51,7 +51,14 @@ type Route struct {
 	Handler reflect.Value // Dynamic method sig.
 }
 
+type middlewareHandler struct {
+	Generic bool
+	DynamicMiddleware reflect.Value
+	GenericMiddleware GenericMiddleware
+}
+
 type NextMiddlewareFunc func(ResponseWriter, *Request)
+type GenericMiddleware func(ResponseWriter, *Request, NextMiddlewareFunc)
 
 func New(ctx interface{}) *Router {
 	validateContext(ctx, nil)
@@ -93,7 +100,12 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 func (r *Router) Middleware(fn interface{}) *Router {
 	vfn := reflect.ValueOf(fn)
 	validateMiddleware(vfn, r.contextType)
-	r.middleware = append(r.middleware, vfn)
+	if vfn.Type().NumIn() == 3 {
+		r.middleware = append(r.middleware, &middlewareHandler{Generic: true, GenericMiddleware: fn.(func(ResponseWriter, *Request, NextMiddlewareFunc))})
+	} else {
+		r.middleware = append(r.middleware, &middlewareHandler{Generic: false, DynamicMiddleware: vfn})
+	}
+	
 	return r
 }
 

@@ -64,7 +64,7 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 		// Side effects of this block:
 		//  - set currentMiddlewareIndex, currentRouterIndex, currentMiddlewareLen
 		//  - calculate route, setting routers/contexts, and fields in req.
-		var middleware reflect.Value
+		var middleware *middlewareHandler
 		if closure.currentMiddlewareIndex < closure.currentMiddlewareLen {
 			middleware = closure.Routers[closure.currentRouterIndex].middleware[closure.currentMiddlewareIndex]
 		} else {
@@ -113,15 +113,11 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 		closure.currentMiddlewareIndex += 1
 
 		// Invoke middleware.
-		if middleware.IsValid() {
-			//invoke(middleware, closure.Contexts[closure.currentRouterIndex], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(closure.Next)})
-			////
-			handlerType := middleware.Type()
-			numIn := handlerType.NumIn()
-			if numIn == 3 {
-				middleware.Call([]reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(closure.Next)})
+		if middleware != nil {
+			if middleware.Generic {
+				middleware.GenericMiddleware(rw, req, closure.Next)
 			} else {
-				middleware.Call([]reflect.Value{closure.Contexts[closure.currentRouterIndex], reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(closure.Next)})
+				middleware.DynamicMiddleware.Call([]reflect.Value{closure.Contexts[closure.currentRouterIndex], reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(closure.Next)})
 			}
 		}
 	}

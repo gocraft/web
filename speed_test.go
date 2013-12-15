@@ -129,7 +129,7 @@ func BenchmarkGocraftWeb_Generic(b *testing.B) {
 	nextMw := func(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
 		next(rw, r)
 	}
-
+	
 	router := web.New(BenchContext{})
 	router.Middleware(nextMw)
 	router.Middleware(nextMw)
