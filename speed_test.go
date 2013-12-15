@@ -11,6 +11,22 @@ import (
 )
 
 //
+// Null response writer
+//
+type NullWriter struct {}
+
+func (w *NullWriter) Header() http.Header {
+	return nil
+}
+
+
+func (w *NullWriter) Write(data []byte) (n int, err error) {
+	return len(data), nil
+}
+
+func (w *NullWriter) WriteHeader(statusCode int) {}
+
+//
 // Types used by any/all frameworks:
 //
 type RouterBuilder func(namespaces []string, resources []string) http.Handler
@@ -226,7 +242,7 @@ func resourceSetup(N int) (namespaces []string, resources []string, requests []*
 }
 
 func benchmarkRoutes(b *testing.B, handler http.Handler, requests []*http.Request) {
-	recorder := httptest.NewRecorder()
+	recorder := &NullWriter{}
 	reqId := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -236,9 +252,9 @@ func benchmarkRoutes(b *testing.B, handler http.Handler, requests []*http.Reques
 		req := requests[reqId]
 		handler.ServeHTTP(recorder, req)
 
-		if recorder.Code != 200 {
-			panic("wat")
-		}
+		//if recorder.Code != 200 {
+		//	panic("wat")
+		//}
 
 		reqId += 1
 	}

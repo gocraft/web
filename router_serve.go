@@ -23,9 +23,10 @@ type middlewareClosure struct {
 // This is the entry point for servering all requests
 func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
-	// Wrap the request and writer.
-	//responseWriter := &AppResponseWriter{ResponseWriter: rw}
-	//request := &Request{Request: r}
+	// Manually create a closure. These variables are needed in middlewareStack.
+	// The reason we put these here instead of in the middleware stack, is Go (as of 1.2)
+	// creates a heap variable for each varaiable in the closure. To minimize that, we'll
+	// just have one (closure *middlewareClosure).
 	var closure middlewareClosure
 	closure.Request.Request = r
 	closure.AppResponseWriter.ResponseWriter = rw
@@ -60,7 +61,7 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 			return
 		}
 
-		// Find middleware to invoke. The goal of this block is to set the middleware variable. If it can't be done, it will be the zero value.
+		// Find middleware to invoke. The goal of this block is to set the middleware variable. If it can't be done, it will be nil.
 		// Side effects of this block:
 		//  - set currentMiddlewareIndex, currentRouterIndex, currentMiddlewareLen
 		//  - calculate route, setting routers/contexts, and fields in req.
