@@ -15,6 +15,7 @@ type middlewareClosure struct {
 	currentMiddlewareIndex int
 	currentRouterIndex int
 	currentMiddlewareLen int
+	RootRouter *Router
 }
 
 // This is the entry point for servering all requests
@@ -31,7 +32,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	closure.Contexts = make([]reflect.Value, 1, rootRouter.maxChildrenDepth)
 	closure.Contexts[0] = reflect.New(rootRouter.contextType)
 	closure.currentMiddlewareLen = len(rootRouter.middleware)
-
+	closure.RootRouter = rootRouter
 	closure.Request.rootContext = closure.Contexts[0]
 
 	// Handle errors
@@ -41,7 +42,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	next := rootRouter.MiddlewareStack(&closure)
+	next := middlewareStack(&closure)
 	next(&closure.AppResponseWriter, &closure.Request)
 }
 
@@ -52,7 +53,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 // There are two 'virtual' middlewares in this stack: the route choosing middleware, and the action invoking middleware.
 // The route choosing middleware is executed after all root middleware. It picks the route.
 // The action invoking middleware is executed after all middleware. It executes the final handler.
-func (r *Router) MiddlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
+func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 	// Where are we in the stack
 
 	var next NextMiddlewareFunc // create self-referential anonymous function
@@ -74,10 +75,10 @@ func (r *Router) MiddlewareStack(closure *middlewareClosure) NextMiddlewareFunc 
 				// If we're still on the root router, it's time to actually figure out what the route is.
 				// Do so, and update the various variables.
 				// We could also 404 at this point: if so, run NotFound handlers and return.
-				route, wildcardMap := calculateRoute(r, req)
+				route, wildcardMap := calculateRoute(closure.RootRouter, req)
 				if route == nil {
-					if r.notFoundHandler.IsValid() {
-						invoke(r.notFoundHandler, closure.Contexts[0], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
+					if closure.RootRouter.notFoundHandler.IsValid() {
+						invoke(closure.RootRouter.notFoundHandler, closure.Contexts[0], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
 					} else {
 						rw.WriteHeader(http.StatusNotFound)
 						fmt.Fprintf(rw, DefaultNotFoundResponse)
