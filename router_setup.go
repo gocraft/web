@@ -13,9 +13,10 @@ const (
 	HttpMethodPut    = HttpMethod("PUT")
 	HttpMethodDelete = HttpMethod("DELETE")
 	HttpMethodPatch  = HttpMethod("PATCH")
+	HttpMethodHead   = HttpMethod("HEAD")
 )
 
-var HttpMethods = []HttpMethod{HttpMethodGet, HttpMethodPost, HttpMethodPut, HttpMethodDelete, HttpMethodPatch}
+var HttpMethods = []HttpMethod{HttpMethodGet, HttpMethodPost, HttpMethodPut, HttpMethodDelete, HttpMethodPatch, HttpMethodHead}
 
 type Router struct {
 	// Hierarchy:
@@ -119,6 +120,10 @@ func (r *Router) Delete(path string, fn interface{}) *Router {
 
 func (r *Router) Patch(path string, fn interface{}) *Router {
 	return r.addRoute(HttpMethodPatch, path, fn)
+}
+
+func (r *Router) Head(path string, fn interface{}) *Router {
+	return r.addRoute(HttpMethodHead, path, fn)
 }
 
 //
