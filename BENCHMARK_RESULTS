@@ -1,5 +1,16 @@
 Result of running `go test speed_test.go -test.bench=.* -test.benchmem=true` on my 1.8 GHz Macbook Air:
 
+2013/12/15 commit a32b88c2a5e1df88a16cd909f800460ff79edbaf (playing with how dynamic handlers are invoked. middleware/composite seem to be mutually exclusive for 5k ns/op)
+BenchmarkGocraftWeb_Simple	 1000000	      1216 ns/op	     333 B/op	       7 allocs/op
+BenchmarkGocraftWeb_Route15	  500000	      3337 ns/op	     612 B/op	       9 allocs/op
+BenchmarkGocraftWeb_Route75	  500000	      3234 ns/op	     612 B/op	       9 allocs/op
+BenchmarkGocraftWeb_Route150	  500000	      3298 ns/op	     612 B/op	       9 allocs/op
+BenchmarkGocraftWeb_Route300	  500000	      3217 ns/op	     612 B/op	       9 allocs/op
+BenchmarkGocraftWeb_Route3000	  500000	      3478 ns/op	     615 B/op	       9 allocs/op
+BenchmarkGocraftWeb_Middleware	  200000	     14566 ns/op	     779 B/op	      16 allocs/op
+BenchmarkGocraftWeb_Generic	 1000000	      1885 ns/op	     457 B/op	       9 allocs/op
+BenchmarkGocraftWeb_Composite	  200000	      9750 ns/op	     917 B/op	      16 allocs/op
+
 2013/12/15 commit 51a79f5dae0bc4847a5eb7cc8b44b6eeb70c13fc (fast generic action handlers. Don't call generic action handlers via reflection)
 BenchmarkGocraftWeb_Simple	 1000000	      1271 ns/op	     333 B/op	       7 allocs/op
 BenchmarkGocraftWeb_Route15	  500000	      2955 ns/op	     633 B/op	       9 allocs/op
