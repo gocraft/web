@@ -48,7 +48,7 @@ type Route struct {
 	Router  *Router
 	Method  HttpMethod
 	Path    string
-	Handler actionHandler
+	Handler *actionHandler
 }
 
 type middlewareHandler struct {
@@ -161,9 +161,9 @@ func (r *Router) addRoute(method HttpMethod, path string, fn interface{}) *Route
 	fullPath := appendPath(r.pathPrefix, path)
 	route := &Route{Method: method, Path: fullPath, Router: r}
 	if vfn.Type().NumIn() == 2 {
-		route.Handler = actionHandler{Generic: true, GenericHandler: fn.(func(ResponseWriter, *Request))}
+		route.Handler = &actionHandler{Generic: true, GenericHandler: fn.(func(ResponseWriter, *Request))}
 	} else {
-		route.Handler = actionHandler{Generic: false, DynamicHandler: vfn}
+		route.Handler = &actionHandler{Generic: false, DynamicHandler: vfn}
 	}
 	r.routes = append(r.routes, route)
 	r.root[method].add(fullPath, route)

@@ -120,16 +120,29 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 
 		// Invoke middleware.
 		if middleware != nil {
-			if middleware.Generic {
-				middleware.GenericMiddleware(rw, req, closure.Next)
-			} else {
-				middleware.DynamicMiddleware.Call([]reflect.Value{closure.Contexts[closure.currentRouterIndex], reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(closure.Next)})
-			}
+			middleware.invoke(closure.Contexts[closure.currentRouterIndex], rw, req, closure.Next)
 		}
 	}
 
 	return closure.Next
 }
+
+func (mw *middlewareHandler) invoke(ctx reflect.Value, rw ResponseWriter, req *Request, next NextMiddlewareFunc) {
+	if mw.Generic {
+		mw.GenericMiddleware(rw, req, next)
+	} else {
+		mw.DynamicMiddleware.Call([]reflect.Value{ctx, reflect.ValueOf(rw), reflect.ValueOf(req), reflect.ValueOf(next)})
+	}
+}
+
+// Strange performance characteristics: this hurts benchmark scores.
+// func (ah *actionHandler) invoke(ctx reflect.Value, rw ResponseWriter, req *Request) {
+// 	if ah.Generic {
+// 		ah.GenericHandler(rw, req)
+// 	} else {
+// 		ah.DynamicHandler.Call([]reflect.Value{ctx, reflect.ValueOf(rw), reflect.ValueOf(req)})
+// 	}
+// }
 
 func calculateRoute(rootRouter *Router, req *Request) (*Route, map[string]string) {
 	var leaf *PathLeaf
