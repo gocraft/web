@@ -23,8 +23,8 @@ type Router struct {
 	children []*Router
 	maxChildrenDepth int
 
-	// For each request we'll create one of these objects
-	contextType reflect.Type
+	// For each request we'll create a clone of this context object
+	context interface{}
 
 	// Eg, "/" or "/admin". Any routes added to this router will be prefixed with this.
 	pathPrefix string
@@ -72,7 +72,7 @@ func New(ctx interface{}) *Router {
 	validateContext(ctx, nil)
 
 	r := &Router{}
-	r.contextType = reflect.TypeOf(ctx)
+	r.context = ctx
 	r.pathPrefix = "/"
 	r.maxChildrenDepth = 1
 	r.root = make(map[HttpMethod]*PathNode)
@@ -83,7 +83,7 @@ func New(ctx interface{}) *Router {
 }
 
 func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
-	validateContext(ctx, r.contextType)
+	validateContext(ctx, reflect.TypeOf(r.context))
 
 	// Create new router, link up hierarchy
 	newRouter := &Router{parent: r}
@@ -98,7 +98,7 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 		}
 	}
 
-	newRouter.contextType = reflect.TypeOf(ctx)
+	newRouter.context = ctx
 	newRouter.pathPrefix = appendPath(r.pathPrefix, pathPrefix)
 	newRouter.root = r.root
 
@@ -107,7 +107,7 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 
 func (r *Router) Middleware(fn interface{}) *Router {
 	vfn := reflect.ValueOf(fn)
-	validateMiddleware(vfn, r.contextType)
+	validateMiddleware(vfn, reflect.TypeOf(r.context))
 	if vfn.Type().NumIn() == 3 {
 		r.middleware = append(r.middleware, &middlewareHandler{Generic: true, GenericMiddleware: fn.(func(ResponseWriter, *Request, NextMiddlewareFunc))})
 	} else {
@@ -119,7 +119,7 @@ func (r *Router) Middleware(fn interface{}) *Router {
 
 func (r *Router) Error(fn interface{}) {
 	vfn := reflect.ValueOf(fn)
-	validateErrorHandler(vfn, r.contextType)
+	validateErrorHandler(vfn, reflect.TypeOf(r.context))
 	r.errorHandler = vfn
 }
 
@@ -128,7 +128,7 @@ func (r *Router) NotFound(fn interface{}) {
 		panic("You can only set a NotFoundHandler on the root router.")
 	}
 	vfn := reflect.ValueOf(fn)
-	validateNotFoundHandler(vfn, r.contextType)
+	validateNotFoundHandler(vfn, reflect.TypeOf(r.context))
 	r.notFoundHandler = vfn
 }
 
@@ -157,7 +157,7 @@ func (r *Router) Patch(path string, fn interface{}) *Router {
 //
 func (r *Router) addRoute(method HttpMethod, path string, fn interface{}) *Router {
 	vfn := reflect.ValueOf(fn)
-	validateHandler(vfn, r.contextType)
+	validateHandler(vfn, reflect.TypeOf(r.context))
 	fullPath := appendPath(r.pathPrefix, path)
 	route := &Route{Method: method, Path: fullPath, Router: r}
 	if vfn.Type().NumIn() == 2 {

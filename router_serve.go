@@ -33,7 +33,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	closure.Routers = make([]*Router, 1, rootRouter.maxChildrenDepth)
 	closure.Routers[0] = rootRouter
 	closure.Contexts = make([]reflect.Value, 1, rootRouter.maxChildrenDepth)
-	closure.Contexts[0] = reflect.New(rootRouter.contextType)
+	closure.Contexts[0] = clone(rootRouter.context)
 	closure.currentMiddlewareLen = len(rootRouter.middleware)
 	closure.RootRouter = rootRouter
 	closure.Request.rootContext = closure.Contexts[0]
@@ -189,10 +189,10 @@ func contextsFor(contexts []reflect.Value, routers []*Router) []reflect.Value {
 
 	for i := 1; i < routersLen; i += 1 {
 		var ctx reflect.Value
-		if routers[i].contextType == routers[i-1].contextType {
+		if reflect.TypeOf(routers[i].context) == reflect.TypeOf(routers[i-1].context) {
 			ctx = contexts[i-1]
 		} else {
-			ctx = reflect.New(routers[i].contextType)
+			ctx = clone(routers[i].context)
 			// set the first field to the parent
 			f := reflect.Indirect(ctx).Field(0)
 			f.Set(contexts[i-1])
@@ -222,9 +222,9 @@ func (rootRouter *Router) handlePanic(rw *AppResponseWriter, req *Request, err i
 
 			// Need to set context to the next context, UNLESS the context is the same type.
 			curContextStruct := reflect.Indirect(context)
-			if targetRouter.contextType != curContextStruct.Type() {
+			if reflect.TypeOf(targetRouter.context) != curContextStruct.Type() {
 				context = curContextStruct.Field(0)
-				if reflect.Indirect(context).Type() != targetRouter.contextType {
+				if reflect.Indirect(context).Type() != reflect.TypeOf(targetRouter.context) {
 					panic("oshit why")
 				}
 			}
@@ -254,6 +254,21 @@ func invoke(handler reflect.Value, ctx reflect.Value, values []reflect.Value) {
 		values = append([]reflect.Value{ctx}, values...)
 		handler.Call(values)
 	}
+}
+
+/**
+ * Returns a shallow copy of a context.
+ */
+func clone(ctx interface {}) reflect.Value {
+	context := reflect.ValueOf(ctx)
+	clonedContext := reflect.New(context.Type())
+
+	for i := 0; i < context.NumField(); i += 1 {
+		reflect.Indirect(clonedContext).Field(i).Set(context.Field(i))
+		// fmt.Printf("%v: \"%v\" -> \"%v\"\n", context.Type().Field(i).Name, context.Field(i), reflect.Indirect(clonedContext).Field(i))
+	}
+
+	return clonedContext
 }
 
 var DefaultNotFoundResponse string = "Not Found"
