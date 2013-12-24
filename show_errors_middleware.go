@@ -3,6 +3,7 @@ package web
 import (
 	"bufio"
 	"html/template"
+	"net/http"
 	"os"
 	"runtime"
 	"strings"
@@ -40,6 +41,8 @@ func renderPrettyError(rw ResponseWriter, req *Request, err interface{}, stack [
 	}
 
 	rw.Header().Set("Content-Type", "text/html")
+	rw.WriteHeader(http.StatusInternalServerError)
+
 	tpl := template.Must(template.New("ErrorPage").Parse(panicPageTpl))
 	tpl.Execute(rw, data)
 }
