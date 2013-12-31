@@ -19,8 +19,8 @@ var HttpMethods = []HttpMethod{HttpMethodGet, HttpMethodPost, HttpMethodPut, Htt
 
 type Router struct {
 	// Hierarchy:
-	parent   *Router // nil if root router.
-	children []*Router
+	parent           *Router // nil if root router.
+	children         []*Router
 	maxChildrenDepth int
 
 	// For each request we'll create one of these objects
@@ -52,17 +52,16 @@ type Route struct {
 }
 
 type middlewareHandler struct {
-	Generic bool
+	Generic           bool
 	DynamicMiddleware reflect.Value
 	GenericMiddleware GenericMiddleware
 }
 
 type actionHandler struct {
-	Generic bool
+	Generic        bool
 	DynamicHandler reflect.Value
 	GenericHandler GenericHandler
 }
-
 
 type NextMiddlewareFunc func(ResponseWriter, *Request)
 type GenericMiddleware func(ResponseWriter, *Request, NextMiddlewareFunc)
@@ -82,13 +81,20 @@ func New(ctx interface{}) *Router {
 	return r
 }
 
+func NewWithPrefix(ctx interface{}, pathPrefix string) *Router {
+	r := New(ctx)
+	r.pathPrefix = pathPrefix
+
+	return r
+}
+
 func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 	validateContext(ctx, r.contextType)
 
 	// Create new router, link up hierarchy
 	newRouter := &Router{parent: r}
 	r.children = append(r.children, newRouter)
-	
+
 	// Increment maxChildrenDepth if this is the first child of the router
 	if len(r.children) == 1 {
 		curParent := r
@@ -113,7 +119,7 @@ func (r *Router) Middleware(fn interface{}) *Router {
 	} else {
 		r.middleware = append(r.middleware, &middlewareHandler{Generic: false, DynamicMiddleware: vfn})
 	}
-	
+
 	return r
 }
 
