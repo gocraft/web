@@ -18,3 +18,7 @@ type Request struct {
 	rootContext   reflect.Value // Root context. Set immediately.
 	targetContext reflect.Value // The target context corresponding to the route. Not set until root middleware is done.
 }
+
+func (r *Request) RoutePath() string {
+	return r.route.Path
+}
