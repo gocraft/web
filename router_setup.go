@@ -17,6 +17,8 @@ const (
 
 var HttpMethods = []HttpMethod{HttpMethodGet, HttpMethodPost, HttpMethodPut, HttpMethodDelete, HttpMethodPatch}
 
+var emptyInterfaceType reflect.Type = reflect.TypeOf((*interface{})(nil)).Elem()
+
 type Router struct {
 	// Hierarchy:
 	parent           *Router // nil if root router.
@@ -227,8 +229,7 @@ func validateHandler(vfn reflect.Value, ctxType reflect.Type) {
 func validateErrorHandler(vfn reflect.Value, ctxType reflect.Type) {
 	var req *Request
 	var resp func() ResponseWriter
-	var interfaceType func() interface{} // This is weird. I need to get an interface{} reflect.Type; var x interface{}; TypeOf(x) doesn't work, because it returns nil
-	if !isValidHandler(vfn, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req), reflect.TypeOf(interfaceType).Out(0)) {
+	if !isValidHandler(vfn, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req), emptyInterfaceType) {
 		panic(instructiveMessage(vfn, "an error handler", "error handler", "rw web.ResponseWriter, req *web.Request, err interface{}", ctxType))
 	}
 }
@@ -272,7 +273,8 @@ func isValidHandler(vfn reflect.Value, ctxType reflect.Type, types ...reflect.Ty
 		// No context
 	} else if numIn == (typesLen + 1) {
 		// context, types
-		if fnType.In(0) != reflect.PtrTo(ctxType) {
+		firstArgType := fnType.In(0)
+		if firstArgType != reflect.PtrTo(ctxType) && firstArgType != emptyInterfaceType {
 			return false
 		}
 		typesStartIdx = 1
