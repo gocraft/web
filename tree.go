@@ -157,6 +157,7 @@ func isWildcard(key string) (bool, string, string) {
 // "/admin" -> ["admin"]
 // "/admin/" -> ["admin"]
 // "/admin/users" -> ["admin", "users"]
+// "/admin//users" -> ["admin", "users"]
 func splitPath(key string) []string {
 	elements := strings.Split(key, "/")
 	if elements[0] == "" {
@@ -164,6 +165,11 @@ func splitPath(key string) []string {
 	}
 	if elements[len(elements)-1] == "" {
 		elements = elements[:len(elements)-1]
+	}
+	for index, val := range elements {
+		if val == "" {
+			elements = append(elements[:index], elements[index+1:]...)
+		}
 	}
 	return elements
 }
