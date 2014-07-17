@@ -74,11 +74,6 @@ func TestRoutes(t *testing.T) {
 			vars:  nil,
 		},
 		{
-			route: "/admin//action",
-			get:   "/admin/action",
-			vars:  nil,
-		},
-		{
 			route: "/admin/action.json",
 			get:   "/admin/action.json",
 			vars:  nil,
@@ -193,11 +188,6 @@ func TestRoutesWithPrefix(t *testing.T) {
 		},
 		{
 			route: "/admin/action",
-			get:   "/v1/admin/action",
-			vars:  nil,
-		},
-		{
-			route: "/admin//action",
 			get:   "/v1/admin/action",
 			vars:  nil,
 		},
