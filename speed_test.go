@@ -13,12 +13,11 @@ import (
 //
 // Null response writer
 //
-type NullWriter struct {}
+type NullWriter struct{}
 
 func (w *NullWriter) Header() http.Header {
 	return nil
 }
-
 
 func (w *NullWriter) Write(data []byte) (n int, err error) {
 	return len(data), nil
@@ -145,7 +144,7 @@ func BenchmarkGocraftWeb_Generic(b *testing.B) {
 	nextMw := func(rw web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
 		next(rw, r)
 	}
-	
+
 	router := web.New(BenchContext{})
 	router.Middleware(nextMw)
 	router.Middleware(nextMw)

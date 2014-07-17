@@ -11,13 +11,13 @@ import (
 type middlewareClosure struct {
 	AppResponseWriter
 	Request
-	Routers []*Router
-	Contexts []reflect.Value
+	Routers                []*Router
+	Contexts               []reflect.Value
 	currentMiddlewareIndex int
-	currentRouterIndex int
-	currentMiddlewareLen int
-	RootRouter *Router
-	Next NextMiddlewareFunc
+	currentRouterIndex     int
+	currentMiddlewareLen   int
+	RootRouter             *Router
+	Next                   NextMiddlewareFunc
 }
 
 // This is the entry point for servering all requests
