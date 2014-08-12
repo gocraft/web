@@ -65,6 +65,7 @@ func Static(directory string, staticOpt ...StaticOptions) func(web.ResponseWrite
 
 	return func(w web.ResponseWriter, req *web.Request, next web.NextMiddlewareFunc) {
 		if req.Method != "GET" && req.Method != "HEAD" {
+			next(w, req)
 			return
 		}
 		file := req.URL.Path
