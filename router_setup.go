@@ -8,6 +8,7 @@ import (
 type HttpMethod string
 
 const (
+	HttpMethodHead   = HttpMethod("HEAD")
 	HttpMethodGet    = HttpMethod("GET")
 	HttpMethodPost   = HttpMethod("POST")
 	HttpMethodPut    = HttpMethod("PUT")
@@ -136,6 +137,10 @@ func (r *Router) NotFound(fn interface{}) {
 	vfn := reflect.ValueOf(fn)
 	validateNotFoundHandler(vfn, r.contextType)
 	r.notFoundHandler = vfn
+}
+
+func (r *Router) Head(path string, fn interface{}) *Router {
+	return r.addRoute(HttpMethodHead, path, fn)
 }
 
 func (r *Router) Get(path string, fn interface{}) *Router {
