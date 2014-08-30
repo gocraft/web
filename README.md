@@ -324,6 +324,12 @@ fmt.Fprintf(rw, "<html>I'm a web page!</html>")
 
 This is currently where the implementation of this library stops. I recommend you read the documentation of [net/http](http://golang.org/pkg/net/http/).
 
+## Extra Middlware
+This package is going to keep the built-in middlware simple and lean. Extra middleware can be found across the web:
+*  [https://github.com/opennota/json-binding](https://github.com/opennota/json-binding) - mapping JSON request into a struct
+
+If you'd like me to link to your middleware, let me know with a pull request to this README.
+
 ## Thanks & Authors
 I use code/got inspiration from these excellent libraries:
 *  [Revel](https://github.com/robfig/revel) - pathtree routing.
