@@ -1,24 +1,12 @@
 TODO:
- - audit exported structures (appResponseWriter, for instance)
- - refactor tests to use assertResponse
- 
- - benchmarks:
-   - 404 benchmark -- fn(# routes)
-   - 500 benchmark
-   - regex benchmarks (when that feature exists)
-
- - ??? Unsure thoughts
-   - Wrap the request with some stuff that gives you a nice view of the params
-   - helpers to render JSON
-   - helpers to do JSON crud
-   - suffix capture (eg, /suggestions.:format)
-   - trailing slash policy
-   - static file server:
-     - slow: StaticMiddleware("public"), because all requests check filesystem
-     - But, most things aren't naked in public. They're in image, js, css. Or they're the favicon, or robots.txt
-     - StaticMiddleware("public", "favicon.ico", "robots.txt", "images", "javascripts", "stylesheets")
-     - If you go ahead and list root segments and files, then we can skip checking most requests
-     - OR, we can scan for root when we start the router.
+ - Refactor tests to not use any external tools.
+ - Update benchmarks.
+ - Add tests for the static middleware.
+ - Go vet
+ - Code coverage
+ - Investigate sync.Pool
+ - Investigate using julian's router.
+ - Head middleware?
 
    
 
