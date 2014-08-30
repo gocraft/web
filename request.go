@@ -19,6 +19,9 @@ type Request struct {
 	targetContext reflect.Value // The target context corresponding to the route. Not set until root middleware is done.
 }
 
+func (r *Request) IsRouted() bool {
+	return r.route != nil
+}
 func (r *Request) RoutePath() string {
 	return r.route.Path
 }
