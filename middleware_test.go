@@ -71,6 +71,11 @@ func (c *TicketsContext) mwEta(w web.ResponseWriter, r *web.Request, next web.Ne
 	next(w, r)
 }
 
+func mwGenricInterface(ctx interface{}, w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+	fmt.Fprintf(w, "context-mw-Interface ")
+	next(w, r)
+}
+
 func (s *MiddlewareTestSuite) TestFlatNoMiddleware(c *C) {
 	router := web.New(Context{})
 	router.Get("/action", (*Context).A)
@@ -259,4 +264,14 @@ func (s *MiddlewareTestSuite) TestSameNamespace(c *C) {
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
 	assertResponse(c, rw, "admin-B", 200)
+}
+
+func (s *MiddlewareTestSuite) TestInterfaceMiddleware(c *C) {
+	router := web.New(Context{})
+	router.Middleware(mwGenricInterface)
+	router.Get("/action", (*Context).A)
+
+	rw, req := newTestRequest("GET", "/action")
+	router.ServeHTTP(rw, req)
+	assertResponse(c, rw, "context-mw-Interface context-A", 200)
 }
