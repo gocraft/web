@@ -22,6 +22,10 @@ type Request struct {
 func (r *Request) IsRouted() bool {
 	return r.route != nil
 }
+
 func (r *Request) RoutePath() string {
-	return r.route.Path
+	if r.route != nil {
+		return r.route.Path
+	}
+	return ""
 }
