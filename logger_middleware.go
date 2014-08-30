@@ -23,5 +23,5 @@ func LoggerMiddleware(rw ResponseWriter, req *Request, next NextMiddlewareFunc) 
 		durationUnits = "ns"
 	}
 
-	fmt.Printf("[%d %s] %d '%s'\n", duration, durationUnits, rw.StatusCode(), req.URL.Path)
+	fmt.Printf("[%d %s] %d '%s'\n", duration, durationUnits, 0, req.URL.Path)
 }

@@ -3,7 +3,7 @@ package web_test
 import (
 	"fmt"
 	"github.com/gocraft/web"
-	. "launchpad.net/gocheck"
+	. "github.com/go-check/check"
 	"net/http"
 	"strings"
 )

@@ -9,7 +9,7 @@ import (
 
 // TODO: normalize the exportedness
 type middlewareClosure struct {
-	AppResponseWriter
+	ResponseWriter
 	Request
 	Routers                []*Router
 	Contexts               []reflect.Value
@@ -29,7 +29,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// just have one (closure *middlewareClosure).
 	var closure middlewareClosure
 	closure.Request.Request = r
-	closure.AppResponseWriter.ResponseWriter = rw
+	closure.ResponseWriter = rw
 	closure.Routers = make([]*Router, 1, rootRouter.maxChildrenDepth)
 	closure.Routers[0] = rootRouter
 	closure.Contexts = make([]reflect.Value, 1, rootRouter.maxChildrenDepth)
@@ -41,12 +41,12 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// Handle errors
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			rootRouter.handlePanic(&closure.AppResponseWriter, &closure.Request, recovered)
+			rootRouter.handlePanic(closure.ResponseWriter, &closure.Request, recovered)
 		}
 	}()
 
 	next := middlewareStack(&closure)
-	next(&closure.AppResponseWriter, &closure.Request)
+	next(closure.ResponseWriter, &closure.Request)
 }
 
 // This function executes the middleware stack. It does so creating/returning an anonymous function/closure.
@@ -206,7 +206,7 @@ func contextsFor(contexts []reflect.Value, routers []*Router) []reflect.Value {
 // If there's a panic in the root middleware (so that we don't have a route/target), then invoke the root handler or default.
 // If there's a panic in other middleware, then invoke the target action's function.
 // If there's a panic in the action handler, then invoke the target action's function.
-func (rootRouter *Router) handlePanic(rw *AppResponseWriter, req *Request, err interface{}) {
+func (rootRouter *Router) handlePanic(rw ResponseWriter, req *Request, err interface{}) {
 	var targetRouter *Router  // This will be set to the router we want to use the errorHandler on.
 	var context reflect.Value // this is the context of the target router
 
