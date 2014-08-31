@@ -5,19 +5,19 @@ import (
 	"strings"
 )
 
-type PathNode struct {
+type pathNode struct {
 
 	// Given the next segment s, if edges[s] exists, then we'll look there first.
-	edges map[string]*PathNode
+	edges map[string]*pathNode
 
 	// If set, failure to match on edges will match on wildcard
-	wildcard *PathNode
+	wildcard *pathNode
 
 	// If set, and we have nothing left to match, then we match on this node
-	leaves []*PathLeaf
+	leaves []*pathLeaf
 }
 
-// PathLeaf represents a leaf path segment that corresponds to a single route.
+// pathLeaf represents a leaf path segment that corresponds to a single route.
 // For the route /admin/forums/:forum_id:\d.*/suggestions/:suggestion_id:\d.*
 // We'd have wildcards = ["forum_id", "suggestion_id"]
 //         and regexps = [/\d.*/, /\d.*/]
@@ -27,7 +27,7 @@ type PathNode struct {
 // For the route /admin/forums/:forum_id/suggestions/:suggestion_id
 // We'd have wildcards = ["forum_id", "suggestion_id"]
 //         and regexps = nil
-type PathLeaf struct {
+type pathLeaf struct {
 	// names of wildcards that lead to this leaf. eg, ["category_id"] for the wildcard ":category_id"
 	wildcards []string
 
@@ -39,15 +39,15 @@ type PathLeaf struct {
 	route *Route
 }
 
-func newPathNode() *PathNode {
-	return &PathNode{edges: make(map[string]*PathNode)}
+func newPathNode() *pathNode {
+	return &pathNode{edges: make(map[string]*pathNode)}
 }
 
-func (pn *PathNode) add(path string, route *Route) {
+func (pn *pathNode) add(path string, route *Route) {
 	pn.addInternal(splitPath(path), route, nil, nil)
 }
 
-func (pn *PathNode) addInternal(segments []string, route *Route, wildcards []string, regexps []*regexp.Regexp) {
+func (pn *pathNode) addInternal(segments []string, route *Route, wildcards []string, regexps []*regexp.Regexp) {
 	if len(segments) == 0 {
 		allNilRegexps := true
 		for _, r := range regexps {
@@ -59,7 +59,7 @@ func (pn *PathNode) addInternal(segments []string, route *Route, wildcards []str
 		if allNilRegexps {
 			regexps = nil
 		}
-		pn.leaves = append(pn.leaves, &PathLeaf{route: route, wildcards: wildcards, regexps: regexps})
+		pn.leaves = append(pn.leaves, &pathLeaf{route: route, wildcards: wildcards, regexps: regexps})
 		// TODO: ? detect if we have duplicate leaves. (eg, 2 routes that are exactly the same)
 	} else { // len(segments) >= 1
 		seg := segments[0]
@@ -80,7 +80,7 @@ func (pn *PathNode) addInternal(segments []string, route *Route, wildcards []str
 	}
 }
 
-func (pn *PathNode) Match(path string) (leaf *PathLeaf, wildcards map[string]string) {
+func (pn *pathNode) Match(path string) (leaf *pathLeaf, wildcards map[string]string) {
 
 	// Bail on invalid paths.
 	if len(path) == 0 || path[0] != '/' {
@@ -92,7 +92,7 @@ func (pn *PathNode) Match(path string) (leaf *PathLeaf, wildcards map[string]str
 
 // Segments is like ["admin", "users"] representing "/admin/users"
 // wildcardValues are the actual values accumulated when we match on a wildcard.
-func (pn *PathNode) match(segments []string, wildcardValues []string) (leaf *PathLeaf, wildcardMap map[string]string) {
+func (pn *pathNode) match(segments []string, wildcardValues []string) (leaf *pathLeaf, wildcardMap map[string]string) {
 	// Handle leaf nodes:
 	if len(segments) == 0 {
 		for _, leaf := range pn.leaves {
@@ -118,7 +118,7 @@ func (pn *PathNode) match(segments []string, wildcardValues []string) (leaf *Pat
 	return leaf, wildcardMap
 }
 
-func (leaf *PathLeaf) match(wildcardValues []string) bool {
+func (leaf *pathLeaf) match(wildcardValues []string) bool {
 	if leaf.regexps == nil {
 		return true
 	}
@@ -169,7 +169,7 @@ func splitPath(key string) []string {
 	return elements
 }
 
-func makeWildcardMap(leaf *PathLeaf, wildcards []string) map[string]string {
+func makeWildcardMap(leaf *pathLeaf, wildcards []string) map[string]string {
 	if leaf == nil {
 		return nil
 	}

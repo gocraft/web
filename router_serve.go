@@ -145,7 +145,7 @@ func (mw *middlewareHandler) invoke(ctx reflect.Value, rw ResponseWriter, req *R
 // }
 
 func calculateRoute(rootRouter *Router, req *Request) (*Route, map[string]string) {
-	var leaf *PathLeaf
+	var leaf *pathLeaf
 	var wildcardMap map[string]string
 	tree, ok := rootRouter.root[HTTPMethod(req.Method)]
 	if ok {

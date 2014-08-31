@@ -36,7 +36,7 @@ type Router struct {
 	routes     []*Route
 
 	// The root pathnode is the same for a tree of Routers
-	root map[HTTPMethod]*PathNode
+	root map[HTTPMethod]*pathNode
 
 	// This can can be set on any router. The target's ErrorHandler will be invoked if it exists
 	errorHandler reflect.Value
@@ -76,7 +76,7 @@ func New(ctx interface{}) *Router {
 	r.contextType = reflect.TypeOf(ctx)
 	r.pathPrefix = "/"
 	r.maxChildrenDepth = 1
-	r.root = make(map[HTTPMethod]*PathNode)
+	r.root = make(map[HTTPMethod]*pathNode)
 	for _, method := range HTTPMethods {
 		r.root[method] = newPathNode()
 	}
