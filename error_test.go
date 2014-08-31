@@ -2,21 +2,17 @@ package web
 
 import (
 	"fmt"
-	. "launchpad.net/gocheck"
+	"github.com/stretchr/testify/assert"
 	"net/http"
-	"strings"
+	"testing"
 )
-
-type ErrorTestSuite struct{}
-
-var _ = Suite(&ErrorTestSuite{})
 
 func ErrorHandlerWithNoContext(w ResponseWriter, r *Request, err interface{}) {
 	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintf(w, "Contextless Error")
 }
 
-func (s *ErrorTestSuite) TestNoErorHandler(c *C) {
+func TestNoErrorHandler(t *testing.T) {
 	router := New(Context{})
 	router.Get("/action", (*Context).ErrorAction)
 
@@ -25,16 +21,14 @@ func (s *ErrorTestSuite) TestNoErorHandler(c *C) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Application Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assertResponseT(t, rw, "Application Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Application Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assertResponseT(t, rw, "Application Error", http.StatusInternalServerError)
 }
 
-func (s *ErrorTestSuite) TestHandlerOnRoot(c *C) {
+func TestHandlerOnRoot(t *testing.T) {
 	router := New(Context{})
 	router.Error((*Context).ErrorHandler)
 	router.Get("/action", (*Context).ErrorAction)
@@ -44,16 +38,14 @@ func (s *ErrorTestSuite) TestHandlerOnRoot(c *C) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "My Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assertResponseT(t, rw, "My Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "My Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assertResponseT(t, rw, "My Error", http.StatusInternalServerError)
 }
 
-func (s *ErrorTestSuite) TestContextlessError(c *C) {
+func TestContextlessError(t *testing.T) {
 	router := New(Context{})
 	router.Error(ErrorHandlerWithNoContext)
 	router.Get("/action", (*Context).ErrorAction)
@@ -63,16 +55,15 @@ func (s *ErrorTestSuite) TestContextlessError(c *C) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Contextless Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assert.Equal(t, http.StatusInternalServerError, rw.Code)
+	assertResponseT(t, rw, "Contextless Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Contextless Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assertResponseT(t, rw, "Contextless Error", http.StatusInternalServerError)
 }
 
-func (s *ErrorTestSuite) TestMultipleErrorHandlers(c *C) {
+func TestMultipleErrorHandlers(t *testing.T) {
 	router := New(Context{})
 	router.Error((*Context).ErrorHandler)
 	router.Get("/action", (*Context).ErrorAction)
@@ -83,16 +74,14 @@ func (s *ErrorTestSuite) TestMultipleErrorHandlers(c *C) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "My Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assertResponseT(t, rw, "My Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Admin Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assertResponseT(t, rw, "Admin Error", http.StatusInternalServerError)
 }
 
-func (s *ErrorTestSuite) TestMultipleErrorHandlers2(c *C) {
+func TestMultipleErrorHandlers2(t *testing.T) {
 	router := New(Context{})
 	router.Get("/action", (*Context).ErrorAction)
 
@@ -106,21 +95,18 @@ func (s *ErrorTestSuite) TestMultipleErrorHandlers2(c *C) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Application Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assertResponseT(t, rw, "Application Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Admin Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assertResponseT(t, rw, "Admin Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/api/action")
 	router.ServeHTTP(rw, req)
-	c.Assert(strings.TrimSpace(string(rw.Body.Bytes())), Equals, "Api Error")
-	c.Assert(rw.Code, Equals, http.StatusInternalServerError)
+	assertResponseT(t, rw, "Api Error", http.StatusInternalServerError)
 }
 
-func (s *ErrorTestSuite) TestRootMiddlewarePanic(c *C) {
+func TestRootMiddlewarePanic(t *testing.T) {
 	router := New(Context{})
 	router.Middleware((*Context).ErrorMiddleware)
 	router.Error((*Context).ErrorHandler)
@@ -130,10 +116,10 @@ func (s *ErrorTestSuite) TestRootMiddlewarePanic(c *C) {
 
 	rw, req := newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "My Error", 500)
+	assertResponseT(t, rw, "My Error", 500)
 }
 
-func (s *ErrorTestSuite) TestNonRootMiddlewarePanic(c *C) {
+func TestNonRootMiddlewarePanic(t *testing.T) {
 	router := New(Context{})
 	router.Error((*Context).ErrorHandler)
 	admin := router.Subrouter(AdminContext{}, "/admin")
@@ -143,10 +129,10 @@ func (s *ErrorTestSuite) TestNonRootMiddlewarePanic(c *C) {
 
 	rw, req := newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "Admin Error", 500)
+	assertResponseT(t, rw, "Admin Error", 500)
 }
 
-func (s *ErrorTestSuite) TestConsistentContext(c *C) {
+func TestConsistentContext(t *testing.T) {
 	router := New(Context{})
 	router.Error((*Context).ErrorHandler)
 	admin := router.Subrouter(Context{}, "/admin")
@@ -155,5 +141,5 @@ func (s *ErrorTestSuite) TestConsistentContext(c *C) {
 
 	rw, req := newTestRequest("GET", "/admin/foo")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "My Secondary Error", 500)
+	assertResponseT(t, rw, "My Secondary Error", 500)
 }

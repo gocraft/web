@@ -147,10 +147,10 @@ func isWildcard(key string) (bool, string, string) {
 		if len(substrs) == 1 {
 			return true, substrs[0], ""
 		}
-		
+
 		return true, substrs[0], substrs[1]
 	}
-	
+
 	return false, "", ""
 }
 
