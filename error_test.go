@@ -21,11 +21,11 @@ func TestNoErrorHandler(t *testing.T) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "Application Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "Application Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "Application Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "Application Error", http.StatusInternalServerError)
 }
 
 func TestHandlerOnRoot(t *testing.T) {
@@ -38,11 +38,11 @@ func TestHandlerOnRoot(t *testing.T) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "My Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "My Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "My Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "My Error", http.StatusInternalServerError)
 }
 
 func TestContextlessError(t *testing.T) {
@@ -56,11 +56,11 @@ func TestContextlessError(t *testing.T) {
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
 	assert.Equal(t, http.StatusInternalServerError, rw.Code)
-	assertResponseT(t, rw, "Contextless Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "Contextless Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "Contextless Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "Contextless Error", http.StatusInternalServerError)
 }
 
 func TestMultipleErrorHandlers(t *testing.T) {
@@ -74,11 +74,11 @@ func TestMultipleErrorHandlers(t *testing.T) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "My Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "My Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "Admin Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "Admin Error", http.StatusInternalServerError)
 }
 
 func TestMultipleErrorHandlers2(t *testing.T) {
@@ -95,15 +95,15 @@ func TestMultipleErrorHandlers2(t *testing.T) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "Application Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "Application Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "Admin Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "Admin Error", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/api/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "Api Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "Api Error", http.StatusInternalServerError)
 }
 
 func TestRootMiddlewarePanic(t *testing.T) {
@@ -116,7 +116,7 @@ func TestRootMiddlewarePanic(t *testing.T) {
 
 	rw, req := newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "My Error", 500)
+	assertResponse(t, rw, "My Error", 500)
 }
 
 func TestNonRootMiddlewarePanic(t *testing.T) {
@@ -129,7 +129,7 @@ func TestNonRootMiddlewarePanic(t *testing.T) {
 
 	rw, req := newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "Admin Error", 500)
+	assertResponse(t, rw, "Admin Error", 500)
 }
 
 func TestConsistentContext(t *testing.T) {
@@ -141,5 +141,5 @@ func TestConsistentContext(t *testing.T) {
 
 	rw, req := newTestRequest("GET", "/admin/foo")
 	router.ServeHTTP(rw, req)
-	assertResponseT(t, rw, "My Secondary Error", 500)
+	assertResponse(t, rw, "My Secondary Error", 500)
 }

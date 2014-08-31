@@ -2,23 +2,27 @@ package web
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	. "launchpad.net/gocheck"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"strings"
 	"testing"
 )
 
 //
-// This file is the "driver" for the test suite. We're using gocheck.
 // This file will contain helpers and general things the rest of the suite needs
 //
 
-//
-// gocheck: hook into "go test"
-//
-func Test(t *testing.T) { TestingT(t) }
+// Return's the caller's caller info.
+func callerInfo() string {
+	_, file, line, ok := runtime.Caller(2)
+	if !ok {
+		return ""
+	}
+	parts := strings.Split(file, "/")
+	file = parts[len(parts)-1]
+	return fmt.Sprintf("%s:%d", file, line)
+}
 
 // Make a testing request
 func newTestRequest(method, path string) (*httptest.ResponseRecorder, *http.Request) {
@@ -28,16 +32,13 @@ func newTestRequest(method, path string) (*httptest.ResponseRecorder, *http.Requ
 	return recorder, request
 }
 
-func assertResponse(c *C, rr *httptest.ResponseRecorder, body string, code int) {
-	c.Assert(strings.TrimSpace(string(rr.Body.Bytes())), Equals, body)
-	c.Assert(rr.Code, Equals, code)
-}
-
-// TODO: refactor this to do proper
-// TODO: change tests in error test to use this
-func assertResponseT(t *testing.T, rr *httptest.ResponseRecorder, body string, code int) {
-	assert.Equal(t, body, strings.TrimSpace(string(rr.Body.Bytes())))
-	assert.Equal(t, code, rr.Code)
+func assertResponse(t *testing.T, rr *httptest.ResponseRecorder, body string, code int) {
+	if gotBody := strings.TrimSpace(string(rr.Body.Bytes())); body != gotBody {
+		t.Errorf("assertResponse: expected body to be %s but got %s. (caller: %s)", body, gotBody, callerInfo())
+	}
+	if code != rr.Code {
+		t.Errorf("assertResponse: expected code to be %d but got %d. (caller: %s)", code, rr.Code, callerInfo())
+	}
 }
 
 //

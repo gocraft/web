@@ -2,12 +2,8 @@ package web
 
 import (
 	"fmt"
-	. "launchpad.net/gocheck"
+	"testing"
 )
-
-type MiddlewareTestSuite struct{}
-
-var _ = Suite(&MiddlewareTestSuite{})
 
 func (c *Context) A(w ResponseWriter, r *Request) {
 	fmt.Fprintf(w, "context-A")
@@ -73,21 +69,21 @@ func mwGenricInterface(ctx interface{}, w ResponseWriter, r *Request, next NextM
 	next(w, r)
 }
 
-func (s *MiddlewareTestSuite) TestFlatNoMiddleware(c *C) {
+func TestFlatNoMiddleware(t *testing.T) {
 	router := New(Context{})
 	router.Get("/action", (*Context).A)
 	router.Get("/action_z", (*Context).Z)
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-A", 200)
+	assertResponse(t, rw, "context-A", 200)
 
 	rw, req = newTestRequest("GET", "/action_z")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-Z", 200)
+	assertResponse(t, rw, "context-Z", 200)
 }
 
-func (s *MiddlewareTestSuite) TestFlatOneMiddleware(c *C) {
+func TestFlatOneMiddleware(t *testing.T) {
 	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	router.Get("/action", (*Context).A)
@@ -95,14 +91,14 @@ func (s *MiddlewareTestSuite) TestFlatOneMiddleware(c *C) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha context-A", 200)
+	assertResponse(t, rw, "context-mw-Alpha context-A", 200)
 
 	rw, req = newTestRequest("GET", "/action_z")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha context-Z", 200)
+	assertResponse(t, rw, "context-mw-Alpha context-Z", 200)
 }
 
-func (s *MiddlewareTestSuite) TestFlatTwoMiddleware(c *C) {
+func TestFlatTwoMiddleware(t *testing.T) {
 	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	router.Middleware((*Context).mwBeta)
@@ -111,14 +107,14 @@ func (s *MiddlewareTestSuite) TestFlatTwoMiddleware(c *C) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha context-mw-Beta context-A", 200)
+	assertResponse(t, rw, "context-mw-Alpha context-mw-Beta context-A", 200)
 
 	rw, req = newTestRequest("GET", "/action_z")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha context-mw-Beta context-Z", 200)
+	assertResponse(t, rw, "context-mw-Alpha context-mw-Beta context-Z", 200)
 }
 
-func (s *MiddlewareTestSuite) TestDualTree(c *C) {
+func TestDualTree(t *testing.T) {
 	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	router.Get("/action", (*Context).A)
@@ -131,18 +127,18 @@ func (s *MiddlewareTestSuite) TestDualTree(c *C) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha context-A", 200)
+	assertResponse(t, rw, "context-mw-Alpha context-A", 200)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha admin-mw-Epsilon admin-B", 200)
+	assertResponse(t, rw, "context-mw-Alpha admin-mw-Epsilon admin-B", 200)
 
 	rw, req = newTestRequest("GET", "/api/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha api-mw-Delta api-C", 200)
+	assertResponse(t, rw, "context-mw-Alpha api-mw-Delta api-C", 200)
 }
 
-func (s *MiddlewareTestSuite) TestDualLeaningLeftTree(c *C) {
+func TestDualLeaningLeftTree(t *testing.T) {
 	router := New(Context{})
 	router.Get("/action", (*Context).A)
 	admin := router.Subrouter(AdminContext{}, "/admin")
@@ -153,18 +149,18 @@ func (s *MiddlewareTestSuite) TestDualLeaningLeftTree(c *C) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-A", 200)
+	assertResponse(t, rw, "context-A", 200)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "admin-B", 200)
+	assertResponse(t, rw, "admin-B", 200)
 
 	rw, req = newTestRequest("GET", "/api/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "api-mw-Delta api-C", 200)
+	assertResponse(t, rw, "api-mw-Delta api-C", 200)
 }
 
-func (s *MiddlewareTestSuite) TestTicketsA(c *C) {
+func TestTicketsA(t *testing.T) {
 	router := New(Context{})
 	admin := router.Subrouter(AdminContext{}, "/admin")
 	admin.Middleware((*AdminContext).mwEpsilon)
@@ -173,10 +169,10 @@ func (s *MiddlewareTestSuite) TestTicketsA(c *C) {
 
 	rw, req := newTestRequest("GET", "/admin/tickets/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "admin-mw-Epsilon tickets-D", 200)
+	assertResponse(t, rw, "admin-mw-Epsilon tickets-D", 200)
 }
 
-func (s *MiddlewareTestSuite) TestTicketsB(c *C) {
+func TestTicketsB(t *testing.T) {
 	router := New(Context{})
 	admin := router.Subrouter(AdminContext{}, "/admin")
 	tickets := admin.Subrouter(TicketsContext{}, "/tickets")
@@ -185,10 +181,10 @@ func (s *MiddlewareTestSuite) TestTicketsB(c *C) {
 
 	rw, req := newTestRequest("GET", "/admin/tickets/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "tickets-mw-Eta tickets-D", 200)
+	assertResponse(t, rw, "tickets-mw-Eta tickets-D", 200)
 }
 
-func (s *MiddlewareTestSuite) TestTicketsC(c *C) {
+func TestTicketsC(t *testing.T) {
 	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	admin := router.Subrouter(AdminContext{}, "/admin")
@@ -197,10 +193,10 @@ func (s *MiddlewareTestSuite) TestTicketsC(c *C) {
 
 	rw, req := newTestRequest("GET", "/admin/tickets/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha tickets-D", 200)
+	assertResponse(t, rw, "context-mw-Alpha tickets-D", 200)
 }
 
-func (s *MiddlewareTestSuite) TestTicketsD(c *C) {
+func TestTicketsD(t *testing.T) {
 	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	admin := router.Subrouter(AdminContext{}, "/admin")
@@ -210,10 +206,10 @@ func (s *MiddlewareTestSuite) TestTicketsD(c *C) {
 
 	rw, req := newTestRequest("GET", "/admin/tickets/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha tickets-mw-Eta tickets-D", 200)
+	assertResponse(t, rw, "context-mw-Alpha tickets-mw-Eta tickets-D", 200)
 }
 
-func (s *MiddlewareTestSuite) TestTicketsE(c *C) {
+func TestTicketsE(t *testing.T) {
 	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	router.Middleware((*Context).mwBeta)
@@ -227,20 +223,20 @@ func (s *MiddlewareTestSuite) TestTicketsE(c *C) {
 
 	rw, req := newTestRequest("GET", "/admin/tickets/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha context-mw-Beta context-mw-Gamma admin-mw-Epsilon admin-mw-Zeta tickets-mw-Eta tickets-D", 200)
+	assertResponse(t, rw, "context-mw-Alpha context-mw-Beta context-mw-Gamma admin-mw-Epsilon admin-mw-Zeta tickets-mw-Eta tickets-D", 200)
 }
 
-func (s *MiddlewareTestSuite) TestNoNext(c *C) {
+func TestNoNext(t *testing.T) {
 	router := New(Context{})
 	router.Middleware((*Context).mwNoNext)
 	router.Get("/action", (*Context).A)
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-NoNext", 200)
+	assertResponse(t, rw, "context-mw-NoNext", 200)
 }
 
-func (s *MiddlewareTestSuite) TestSameContext(c *C) {
+func TestSameContext(t *testing.T) {
 	router := New(Context{})
 	router.Middleware((*Context).mwAlpha).
 		Middleware((*Context).mwBeta)
@@ -250,25 +246,25 @@ func (s *MiddlewareTestSuite) TestSameContext(c *C) {
 
 	rw, req := newTestRequest("GET", "/admin/foo")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Alpha context-mw-Beta context-mw-Gamma context-A", 200)
+	assertResponse(t, rw, "context-mw-Alpha context-mw-Beta context-mw-Gamma context-A", 200)
 }
 
-func (s *MiddlewareTestSuite) TestSameNamespace(c *C) {
+func TestSameNamespace(t *testing.T) {
 	router := New(Context{})
 	admin := router.Subrouter(AdminContext{}, "/")
 	admin.Get("/action", (*AdminContext).B)
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "admin-B", 200)
+	assertResponse(t, rw, "admin-B", 200)
 }
 
-func (s *MiddlewareTestSuite) TestInterfaceMiddleware(c *C) {
+func TestInterfaceMiddleware(t *testing.T) {
 	router := New(Context{})
 	router.Middleware(mwGenricInterface)
 	router.Get("/action", (*Context).A)
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(c, rw, "context-mw-Interface context-A", 200)
+	assertResponse(t, rw, "context-mw-Interface context-A", 200)
 }
