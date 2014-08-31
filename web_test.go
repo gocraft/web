@@ -1,8 +1,7 @@
-package web_test
+package web
 
 import (
 	"fmt"
-	"github.com/gocraft/web"
 	. "launchpad.net/gocheck"
 	"net/http"
 	"net/http/httptest"
@@ -54,52 +53,52 @@ type TicketsContext struct {
 	*AdminContext
 }
 
-func (c *Context) ErrorMiddleware(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *Context) ErrorMiddleware(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	var x, y int
 	fmt.Fprintln(w, x/y)
 }
 
-func (c *Context) ErrorHandler(w web.ResponseWriter, r *web.Request, err interface{}) {
+func (c *Context) ErrorHandler(w ResponseWriter, r *Request, err interface{}) {
 	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintf(w, "My Error")
 }
 
-func (c *Context) ErrorHandlerSecondary(w web.ResponseWriter, r *web.Request, err interface{}) {
+func (c *Context) ErrorHandlerSecondary(w ResponseWriter, r *Request, err interface{}) {
 	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintf(w, "My Secondary Error")
 }
 
-func (c *Context) ErrorAction(w web.ResponseWriter, r *web.Request) {
+func (c *Context) ErrorAction(w ResponseWriter, r *Request) {
 	var x, y int
 	fmt.Fprintln(w, x/y)
 }
 
-func (c *AdminContext) ErrorMiddleware(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *AdminContext) ErrorMiddleware(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	var x, y int
 	fmt.Fprintln(w, x/y)
 }
 
-func (c *AdminContext) ErrorHandler(w web.ResponseWriter, r *web.Request, err interface{}) {
+func (c *AdminContext) ErrorHandler(w ResponseWriter, r *Request, err interface{}) {
 	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintf(w, "Admin Error")
 }
 
-func (c *AdminContext) ErrorAction(w web.ResponseWriter, r *web.Request) {
+func (c *AdminContext) ErrorAction(w ResponseWriter, r *Request) {
 	var x, y int
 	fmt.Fprintln(w, x/y)
 }
 
-func (c *APIContext) ErrorHandler(w web.ResponseWriter, r *web.Request, err interface{}) {
+func (c *APIContext) ErrorHandler(w ResponseWriter, r *Request, err interface{}) {
 	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintf(w, "Api Error")
 }
 
-func (c *APIContext) ErrorAction(w web.ResponseWriter, r *web.Request) {
+func (c *APIContext) ErrorAction(w ResponseWriter, r *Request) {
 	var x, y int
 	fmt.Fprintln(w, x/y)
 }
 
-func (c *TicketsContext) ErrorAction(w web.ResponseWriter, r *web.Request) {
+func (c *TicketsContext) ErrorAction(w ResponseWriter, r *Request) {
 	var x, y int
 	fmt.Fprintln(w, x/y)
 }

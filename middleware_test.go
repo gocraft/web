@@ -1,83 +1,80 @@
-package web_test
+package web
 
 import (
 	"fmt"
-	"github.com/gocraft/web"
 	. "launchpad.net/gocheck"
-	// "net/http"
-	// "strings"
 )
 
 type MiddlewareTestSuite struct{}
 
 var _ = Suite(&MiddlewareTestSuite{})
 
-func (c *Context) A(w web.ResponseWriter, r *web.Request) {
+func (c *Context) A(w ResponseWriter, r *Request) {
 	fmt.Fprintf(w, "context-A")
 }
 
-func (c *Context) Z(w web.ResponseWriter, r *web.Request) {
+func (c *Context) Z(w ResponseWriter, r *Request) {
 	fmt.Fprintf(w, "context-Z")
 }
 
-func (c *AdminContext) B(w web.ResponseWriter, r *web.Request) {
+func (c *AdminContext) B(w ResponseWriter, r *Request) {
 	fmt.Fprintf(w, "admin-B")
 }
 
-func (c *APIContext) C(w web.ResponseWriter, r *web.Request) {
+func (c *APIContext) C(w ResponseWriter, r *Request) {
 	fmt.Fprintf(w, "api-C")
 }
 
-func (c *TicketsContext) D(w web.ResponseWriter, r *web.Request) {
+func (c *TicketsContext) D(w ResponseWriter, r *Request) {
 	fmt.Fprintf(w, "tickets-D")
 }
 
-func (c *Context) mwNoNext(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *Context) mwNoNext(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	fmt.Fprintf(w, "context-mw-NoNext ")
 }
 
-func (c *Context) mwAlpha(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *Context) mwAlpha(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	fmt.Fprintf(w, "context-mw-Alpha ")
 	next(w, r)
 }
 
-func (c *Context) mwBeta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *Context) mwBeta(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	fmt.Fprintf(w, "context-mw-Beta ")
 	next(w, r)
 }
 
-func (c *Context) mwGamma(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *Context) mwGamma(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	fmt.Fprintf(w, "context-mw-Gamma ")
 	next(w, r)
 }
 
-func (c *APIContext) mwDelta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *APIContext) mwDelta(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	fmt.Fprintf(w, "api-mw-Delta ")
 	next(w, r)
 }
 
-func (c *AdminContext) mwEpsilon(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *AdminContext) mwEpsilon(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	fmt.Fprintf(w, "admin-mw-Epsilon ")
 	next(w, r)
 }
 
-func (c *AdminContext) mwZeta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *AdminContext) mwZeta(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	fmt.Fprintf(w, "admin-mw-Zeta ")
 	next(w, r)
 }
 
-func (c *TicketsContext) mwEta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *TicketsContext) mwEta(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	fmt.Fprintf(w, "tickets-mw-Eta ")
 	next(w, r)
 }
 
-func mwGenricInterface(ctx interface{}, w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func mwGenricInterface(ctx interface{}, w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 	fmt.Fprintf(w, "context-mw-Interface ")
 	next(w, r)
 }
 
 func (s *MiddlewareTestSuite) TestFlatNoMiddleware(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Get("/action", (*Context).A)
 	router.Get("/action_z", (*Context).Z)
 
@@ -91,7 +88,7 @@ func (s *MiddlewareTestSuite) TestFlatNoMiddleware(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestFlatOneMiddleware(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	router.Get("/action", (*Context).A)
 	router.Get("/action_z", (*Context).Z)
@@ -106,7 +103,7 @@ func (s *MiddlewareTestSuite) TestFlatOneMiddleware(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestFlatTwoMiddleware(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	router.Middleware((*Context).mwBeta)
 	router.Get("/action", (*Context).A)
@@ -122,7 +119,7 @@ func (s *MiddlewareTestSuite) TestFlatTwoMiddleware(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestDualTree(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	router.Get("/action", (*Context).A)
 	admin := router.Subrouter(AdminContext{}, "/admin")
@@ -146,7 +143,7 @@ func (s *MiddlewareTestSuite) TestDualTree(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestDualLeaningLeftTree(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Get("/action", (*Context).A)
 	admin := router.Subrouter(AdminContext{}, "/admin")
 	admin.Get("/action", (*AdminContext).B)
@@ -168,7 +165,7 @@ func (s *MiddlewareTestSuite) TestDualLeaningLeftTree(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestTicketsA(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	admin := router.Subrouter(AdminContext{}, "/admin")
 	admin.Middleware((*AdminContext).mwEpsilon)
 	tickets := admin.Subrouter(TicketsContext{}, "/tickets")
@@ -180,7 +177,7 @@ func (s *MiddlewareTestSuite) TestTicketsA(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestTicketsB(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	admin := router.Subrouter(AdminContext{}, "/admin")
 	tickets := admin.Subrouter(TicketsContext{}, "/tickets")
 	tickets.Middleware((*TicketsContext).mwEta)
@@ -192,7 +189,7 @@ func (s *MiddlewareTestSuite) TestTicketsB(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestTicketsC(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	admin := router.Subrouter(AdminContext{}, "/admin")
 	tickets := admin.Subrouter(TicketsContext{}, "/tickets")
@@ -204,7 +201,7 @@ func (s *MiddlewareTestSuite) TestTicketsC(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestTicketsD(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	admin := router.Subrouter(AdminContext{}, "/admin")
 	tickets := admin.Subrouter(TicketsContext{}, "/tickets")
@@ -217,7 +214,7 @@ func (s *MiddlewareTestSuite) TestTicketsD(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestTicketsE(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Middleware((*Context).mwAlpha)
 	router.Middleware((*Context).mwBeta)
 	router.Middleware((*Context).mwGamma)
@@ -234,7 +231,7 @@ func (s *MiddlewareTestSuite) TestTicketsE(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestNoNext(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Middleware((*Context).mwNoNext)
 	router.Get("/action", (*Context).A)
 
@@ -244,7 +241,7 @@ func (s *MiddlewareTestSuite) TestNoNext(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestSameContext(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Middleware((*Context).mwAlpha).
 		Middleware((*Context).mwBeta)
 	admin := router.Subrouter(Context{}, "/admin")
@@ -257,7 +254,7 @@ func (s *MiddlewareTestSuite) TestSameContext(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestSameNamespace(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	admin := router.Subrouter(AdminContext{}, "/")
 	admin.Get("/action", (*AdminContext).B)
 
@@ -267,7 +264,7 @@ func (s *MiddlewareTestSuite) TestSameNamespace(c *C) {
 }
 
 func (s *MiddlewareTestSuite) TestInterfaceMiddleware(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Middleware(mwGenricInterface)
 	router.Get("/action", (*Context).A)
 

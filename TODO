@@ -1,8 +1,8 @@
 TODO:
  - Make the logger be an interface that does Printf.
  - Refactor tests to not use any external tools.
- - Update benchmarks.
  - Add tests for the static middleware.
+ - Adjust the exportedness of some things.
  - Go vet
  - Go lint
  - Code coverage

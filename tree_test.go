@@ -1,9 +1,8 @@
-package web_test
+package web
 
 import (
 	"bytes"
 	"fmt"
-	"github.com/gocraft/web"
 	"net/http"
 	"net/http/httptest"
 	"sort"
@@ -55,7 +54,7 @@ func stringifyMap(m map[string]string) string {
 }
 
 func TestRoutes(t *testing.T) {
-	router := web.New(Ctx{})
+	router := New(Ctx{})
 
 	table := []routeTest{
 		{
@@ -144,7 +143,7 @@ func TestRoutes(t *testing.T) {
 	for _, rt := range table {
 		// func: ensure closure is created per iteraction (it fails otherwise)
 		func(exp string) {
-			router.Get(rt.route, func(w web.ResponseWriter, r *web.Request) {
+			router.Get(rt.route, func(w ResponseWriter, r *Request) {
 				w.Header().Set("X-VARS", stringifyMap(r.PathParams))
 				fmt.Fprintf(w, exp)
 			})
@@ -173,7 +172,7 @@ func TestRoutes(t *testing.T) {
 }
 
 func TestRoutesWithPrefix(t *testing.T) {
-	router := web.NewWithPrefix(Ctx{}, "/v1")
+	router := NewWithPrefix(Ctx{}, "/v1")
 
 	table := []routeTest{
 		{
@@ -262,7 +261,7 @@ func TestRoutesWithPrefix(t *testing.T) {
 	for _, rt := range table {
 		// func: ensure closure is created per iteraction (it fails otherwise)
 		func(exp string) {
-			router.Get(rt.route, func(w web.ResponseWriter, r *web.Request) {
+			router.Get(rt.route, func(w ResponseWriter, r *Request) {
 				w.Header().Set("X-VARS", stringifyMap(r.PathParams))
 				fmt.Fprintf(w, exp)
 			})

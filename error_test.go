@@ -1,8 +1,7 @@
-package web_test
+package web
 
 import (
 	"fmt"
-	"github.com/gocraft/web"
 	. "launchpad.net/gocheck"
 	"net/http"
 	"strings"
@@ -12,13 +11,13 @@ type ErrorTestSuite struct{}
 
 var _ = Suite(&ErrorTestSuite{})
 
-func ErrorHandlerWithNoContext(w web.ResponseWriter, r *web.Request, err interface{}) {
+func ErrorHandlerWithNoContext(w ResponseWriter, r *Request, err interface{}) {
 	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintf(w, "Contextless Error")
 }
 
 func (s *ErrorTestSuite) TestNoErorHandler(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Get("/action", (*Context).ErrorAction)
 
 	admin := router.Subrouter(AdminContext{}, "/admin")
@@ -36,7 +35,7 @@ func (s *ErrorTestSuite) TestNoErorHandler(c *C) {
 }
 
 func (s *ErrorTestSuite) TestHandlerOnRoot(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Error((*Context).ErrorHandler)
 	router.Get("/action", (*Context).ErrorAction)
 
@@ -55,7 +54,7 @@ func (s *ErrorTestSuite) TestHandlerOnRoot(c *C) {
 }
 
 func (s *ErrorTestSuite) TestContextlessError(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Error(ErrorHandlerWithNoContext)
 	router.Get("/action", (*Context).ErrorAction)
 
@@ -74,7 +73,7 @@ func (s *ErrorTestSuite) TestContextlessError(c *C) {
 }
 
 func (s *ErrorTestSuite) TestMultipleErrorHandlers(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Error((*Context).ErrorHandler)
 	router.Get("/action", (*Context).ErrorAction)
 
@@ -94,7 +93,7 @@ func (s *ErrorTestSuite) TestMultipleErrorHandlers(c *C) {
 }
 
 func (s *ErrorTestSuite) TestMultipleErrorHandlers2(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Get("/action", (*Context).ErrorAction)
 
 	admin := router.Subrouter(AdminContext{}, "/admin")
@@ -122,7 +121,7 @@ func (s *ErrorTestSuite) TestMultipleErrorHandlers2(c *C) {
 }
 
 func (s *ErrorTestSuite) TestRootMiddlewarePanic(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Middleware((*Context).ErrorMiddleware)
 	router.Error((*Context).ErrorHandler)
 	admin := router.Subrouter(AdminContext{}, "/admin")
@@ -135,7 +134,7 @@ func (s *ErrorTestSuite) TestRootMiddlewarePanic(c *C) {
 }
 
 func (s *ErrorTestSuite) TestNonRootMiddlewarePanic(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Error((*Context).ErrorHandler)
 	admin := router.Subrouter(AdminContext{}, "/admin")
 	admin.Middleware((*AdminContext).ErrorMiddleware)
@@ -148,7 +147,7 @@ func (s *ErrorTestSuite) TestNonRootMiddlewarePanic(c *C) {
 }
 
 func (s *ErrorTestSuite) TestConsistentContext(c *C) {
-	router := web.New(Context{})
+	router := New(Context{})
 	router.Error((*Context).ErrorHandler)
 	admin := router.Subrouter(Context{}, "/admin")
 	admin.Error((*Context).ErrorHandlerSecondary)
