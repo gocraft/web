@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// LoggerMiddleware is generic middleware that will log requests to Stdout.
 func LoggerMiddleware(rw ResponseWriter, req *Request, next NextMiddlewareFunc) {
 	startTime := time.Now()
 

@@ -42,7 +42,7 @@ type AdminContext struct {
 	*Context
 }
 
-type ApiContext struct {
+type APIContext struct {
 	*Context
 }
 
@@ -89,12 +89,12 @@ func (c *AdminContext) ErrorAction(w web.ResponseWriter, r *web.Request) {
 	fmt.Fprintln(w, x/y)
 }
 
-func (c *ApiContext) ErrorHandler(w web.ResponseWriter, r *web.Request, err interface{}) {
+func (c *APIContext) ErrorHandler(w web.ResponseWriter, r *web.Request, err interface{}) {
 	w.WriteHeader(http.StatusInternalServerError)
 	fmt.Fprintf(w, "Api Error")
 }
 
-func (c *ApiContext) ErrorAction(w web.ResponseWriter, r *web.Request) {
+func (c *APIContext) ErrorAction(w web.ResponseWriter, r *web.Request) {
 	var x, y int
 	fmt.Fprintln(w, x/y)
 }

@@ -5,19 +5,19 @@ import (
 	"strings"
 )
 
-type HttpMethod string
+type HTTPMethod string
 
 const (
-	HttpMethodGet    = HttpMethod("GET")
-	HttpMethodPost   = HttpMethod("POST")
-	HttpMethodPut    = HttpMethod("PUT")
-	HttpMethodDelete = HttpMethod("DELETE")
-	HttpMethodPatch  = HttpMethod("PATCH")
+	HTTPMethodGet    = HTTPMethod("GET")
+	HTTPMethodPost   = HTTPMethod("POST")
+	HTTPMethodPut    = HTTPMethod("PUT")
+	HTTPMethodDelete = HTTPMethod("DELETE")
+	HTTPMethodPatch  = HTTPMethod("PATCH")
 )
 
-var HttpMethods = []HttpMethod{HttpMethodGet, HttpMethodPost, HttpMethodPut, HttpMethodDelete, HttpMethodPatch}
+var HTTPMethods = []HTTPMethod{HTTPMethodGet, HTTPMethodPost, HTTPMethodPut, HTTPMethodDelete, HTTPMethodPatch}
 
-var emptyInterfaceType reflect.Type = reflect.TypeOf((*interface{})(nil)).Elem()
+var emptyInterfaceType = reflect.TypeOf((*interface{})(nil)).Elem()
 
 type Router struct {
 	// Hierarchy:
@@ -36,7 +36,7 @@ type Router struct {
 	routes     []*Route
 
 	// The root pathnode is the same for a tree of Routers
-	root map[HttpMethod]*PathNode
+	root map[HTTPMethod]*PathNode
 
 	// This can can be set on any router. The target's ErrorHandler will be invoked if it exists
 	errorHandler reflect.Value
@@ -48,7 +48,7 @@ type Router struct {
 
 type Route struct {
 	Router  *Router
-	Method  HttpMethod
+	Method  HTTPMethod
 	Path    string
 	Handler *actionHandler
 }
@@ -76,8 +76,8 @@ func New(ctx interface{}) *Router {
 	r.contextType = reflect.TypeOf(ctx)
 	r.pathPrefix = "/"
 	r.maxChildrenDepth = 1
-	r.root = make(map[HttpMethod]*PathNode)
-	for _, method := range HttpMethods {
+	r.root = make(map[HTTPMethod]*PathNode)
+	for _, method := range HTTPMethods {
 		r.root[method] = newPathNode()
 	}
 	return r
@@ -141,29 +141,29 @@ func (r *Router) NotFound(fn interface{}) {
 }
 
 func (r *Router) Get(path string, fn interface{}) *Router {
-	return r.addRoute(HttpMethodGet, path, fn)
+	return r.addRoute(HTTPMethodGet, path, fn)
 }
 
 func (r *Router) Post(path string, fn interface{}) *Router {
-	return r.addRoute(HttpMethodPost, path, fn)
+	return r.addRoute(HTTPMethodPost, path, fn)
 }
 
 func (r *Router) Put(path string, fn interface{}) *Router {
-	return r.addRoute(HttpMethodPut, path, fn)
+	return r.addRoute(HTTPMethodPut, path, fn)
 }
 
 func (r *Router) Delete(path string, fn interface{}) *Router {
-	return r.addRoute(HttpMethodDelete, path, fn)
+	return r.addRoute(HTTPMethodDelete, path, fn)
 }
 
 func (r *Router) Patch(path string, fn interface{}) *Router {
-	return r.addRoute(HttpMethodPatch, path, fn)
+	return r.addRoute(HTTPMethodPatch, path, fn)
 }
 
 //
 //
 //
-func (r *Router) addRoute(method HttpMethod, path string, fn interface{}) *Router {
+func (r *Router) addRoute(method HTTPMethod, path string, fn interface{}) *Router {
 	vfn := reflect.ValueOf(fn)
 	validateHandler(vfn, r.contextType)
 	fullPath := appendPath(r.pathPrefix, path)
@@ -286,7 +286,7 @@ func isValidHandler(vfn reflect.Value, ctxType reflect.Type, types ...reflect.Ty
 		if fnType.In(typesStartIdx) != typeArg {
 			return false
 		}
-		typesStartIdx += 1
+		typesStartIdx++
 	}
 
 	return true

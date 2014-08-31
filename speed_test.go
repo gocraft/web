@@ -215,7 +215,7 @@ func resourceSetup(N int) (namespaces []string, resources []string, requests []*
 	namespaces = []string{"admin", "api", "site"}
 	resources = []string{}
 
-	for i := 0; i < N; i += 1 {
+	for i := 0; i < N; i++ {
 		sha1 := sha1.New()
 		io.WriteString(sha1, fmt.Sprintf("%d", i))
 		strResource := fmt.Sprintf("%x", sha1.Sum(nil))
@@ -242,19 +242,19 @@ func resourceSetup(N int) (namespaces []string, resources []string, requests []*
 
 func benchmarkRoutes(b *testing.B, handler http.Handler, requests []*http.Request) {
 	recorder := &NullWriter{}
-	reqId := 0
+	reqID := 0
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if reqId >= len(requests) {
-			reqId = 0
+		if reqID >= len(requests) {
+			reqID = 0
 		}
-		req := requests[reqId]
+		req := requests[reqID]
 		handler.ServeHTTP(recorder, req)
 
 		//if recorder.Code != 200 {
 		//	panic("wat")
 		//}
 
-		reqId += 1
+		reqID++
 	}
 }

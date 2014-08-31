@@ -24,7 +24,7 @@ func (c *AdminContext) B(w web.ResponseWriter, r *web.Request) {
 	fmt.Fprintf(w, "admin-B")
 }
 
-func (c *ApiContext) C(w web.ResponseWriter, r *web.Request) {
+func (c *APIContext) C(w web.ResponseWriter, r *web.Request) {
 	fmt.Fprintf(w, "api-C")
 }
 
@@ -51,7 +51,7 @@ func (c *Context) mwGamma(w web.ResponseWriter, r *web.Request, next web.NextMid
 	next(w, r)
 }
 
-func (c *ApiContext) mwDelta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
+func (c *APIContext) mwDelta(w web.ResponseWriter, r *web.Request, next web.NextMiddlewareFunc) {
 	fmt.Fprintf(w, "api-mw-Delta ")
 	next(w, r)
 }
@@ -128,9 +128,9 @@ func (s *MiddlewareTestSuite) TestDualTree(c *C) {
 	admin := router.Subrouter(AdminContext{}, "/admin")
 	admin.Middleware((*AdminContext).mwEpsilon)
 	admin.Get("/action", (*AdminContext).B)
-	api := router.Subrouter(ApiContext{}, "/api")
-	api.Middleware((*ApiContext).mwDelta)
-	api.Get("/action", (*ApiContext).C)
+	api := router.Subrouter(APIContext{}, "/api")
+	api.Middleware((*APIContext).mwDelta)
+	api.Get("/action", (*APIContext).C)
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
@@ -150,9 +150,9 @@ func (s *MiddlewareTestSuite) TestDualLeaningLeftTree(c *C) {
 	router.Get("/action", (*Context).A)
 	admin := router.Subrouter(AdminContext{}, "/admin")
 	admin.Get("/action", (*AdminContext).B)
-	api := router.Subrouter(ApiContext{}, "/api")
-	api.Middleware((*ApiContext).mwDelta)
-	api.Get("/action", (*ApiContext).C)
+	api := router.Subrouter(APIContext{}, "/api")
+	api.Middleware((*APIContext).mwDelta)
+	api.Get("/action", (*APIContext).C)
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)

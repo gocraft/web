@@ -17,6 +17,7 @@ type PathNode struct {
 	leaves []*PathLeaf
 }
 
+// PathLeaf represents a leaf path segment that corresponds to a single route.
 // For the route /admin/forums/:forum_id:\d.*/suggestions/:suggestion_id:\d.*
 // We'd have wildcards = ["forum_id", "suggestion_id"]
 //         and regexps = [/\d.*/, /\d.*/]
@@ -145,12 +146,12 @@ func isWildcard(key string) (bool, string, string) {
 		substrs := strings.SplitN(key[1:], ":", 2)
 		if len(substrs) == 1 {
 			return true, substrs[0], ""
-		} else {
-			return true, substrs[0], substrs[1]
 		}
-	} else {
-		return false, "", ""
+		
+		return true, substrs[0], substrs[1]
 	}
+	
+	return false, "", ""
 }
 
 // "/" -> []

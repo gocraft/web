@@ -101,9 +101,9 @@ func (s *ErrorTestSuite) TestMultipleErrorHandlers2(c *C) {
 	admin.Error((*AdminContext).ErrorHandler)
 	admin.Get("/action", (*AdminContext).ErrorAction)
 
-	api := router.Subrouter(ApiContext{}, "/api")
-	api.Error((*ApiContext).ErrorHandler)
-	api.Get("/action", (*ApiContext).ErrorAction)
+	api := router.Subrouter(APIContext{}, "/api")
+	api.Error((*APIContext).ErrorHandler)
+	api.Get("/action", (*APIContext).ErrorAction)
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)

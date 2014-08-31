@@ -94,14 +94,14 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 			}
 
 			closure.currentMiddlewareIndex = 0
-			closure.currentRouterIndex += 1
+			closure.currentRouterIndex++
 			routersLen := len(closure.Routers)
 			for closure.currentRouterIndex < routersLen {
 				closure.currentMiddlewareLen = len(closure.Routers[closure.currentRouterIndex].middleware)
 				if closure.currentMiddlewareLen > 0 {
 					break
 				}
-				closure.currentRouterIndex += 1
+				closure.currentRouterIndex++
 			}
 			if closure.currentRouterIndex < routersLen {
 				middleware = closure.Routers[closure.currentRouterIndex].middleware[closure.currentMiddlewareIndex]
@@ -116,7 +116,7 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 			}
 		}
 
-		closure.currentMiddlewareIndex += 1
+		closure.currentMiddlewareIndex++
 
 		// Invoke middleware.
 		if middleware != nil {
@@ -147,15 +147,15 @@ func (mw *middlewareHandler) invoke(ctx reflect.Value, rw ResponseWriter, req *R
 func calculateRoute(rootRouter *Router, req *Request) (*Route, map[string]string) {
 	var leaf *PathLeaf
 	var wildcardMap map[string]string
-	tree, ok := rootRouter.root[HttpMethod(req.Method)]
+	tree, ok := rootRouter.root[HTTPMethod(req.Method)]
 	if ok {
 		leaf, wildcardMap = tree.Match(req.URL.Path)
 	}
 	if leaf == nil {
 		return nil, nil
-	} else {
-		return leaf.route, wildcardMap
 	}
+	
+	return leaf.route, wildcardMap
 }
 
 // given the route (and target router), return [root router, child router, ..., leaf route's router]
@@ -173,8 +173,8 @@ func routersFor(route *Route, routers []*Router) []*Router {
 	e := len(routers) - 1
 	for s < e {
 		routers[s], routers[e] = routers[e], routers[s]
-		s += 1
-		e -= 1
+		s++
+		e--
 	}
 
 	return routers
@@ -187,7 +187,7 @@ func routersFor(route *Route, routers []*Router) []*Router {
 func contextsFor(contexts []reflect.Value, routers []*Router) []reflect.Value {
 	routersLen := len(routers)
 
-	for i := 1; i < routersLen; i += 1 {
+	for i := 1; i < routersLen; i++ {
 		var ctx reflect.Value
 		if routers[i].contextType == routers[i-1].contextType {
 			ctx = contexts[i-1]
@@ -255,5 +255,5 @@ func invoke(handler reflect.Value, ctx reflect.Value, values []reflect.Value) {
 	}
 }
 
-var DefaultNotFoundResponse string = "Not Found"
-var DefaultPanicResponse string = "Application Error"
+var DefaultNotFoundResponse = "Not Found"
+var DefaultPanicResponse = "Application Error"
