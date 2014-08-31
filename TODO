@@ -1,10 +1,16 @@
 TODO:
  - Adjust the exportedness of some things.
- - Go vet
+   - AppResponseWriter
+   - HTTPMethod
+   - HTTPMethods
+ - Code coverage
+   - setup: Post, Put, Delete, Patch
+   - show errors middleware
+   - IsRouted, RoutePath
+   - PanicHandler
+   - Invalid handlers?
  - Go lint
  - Godoc -- make sure everything is commented.
- - Code coverage
  - Investigate sync.Pool
  - Investigate using julian's router.
  - Head middleware?
- - See what I can do about injecting your own logger?
