@@ -3,7 +3,6 @@ package web
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"sort"
@@ -331,33 +330,31 @@ func TestIsRouted(t *testing.T) {
 	router := New(Context{})
 	router.Middleware(func(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 		if r.IsRouted() {
-			panic("shouldn't be routed yet")
+			t.Error("Shouldn't be routed yet but was.")
 		}
 		if r.RoutePath() != "" {
-			panic("shouldn't have a route path yet")
+			t.Error("Shouldn't have a route path yet.")
 		}
 		next(w, r)
 		if !r.IsRouted() {
-			panic("should be routed")
+			t.Error("Should have been routed but wasn't.")
 		}
 	})
 	subrouter := router.Subrouter(Context{}, "")
 	subrouter.Middleware(func(w ResponseWriter, r *Request, next NextMiddlewareFunc) {
 		if !r.IsRouted() {
-			panic("should be routed")
+			t.Error("Should have been routed but wasn't.")
 		}
 		next(w, r)
 		if !r.IsRouted() {
-			panic("should be routed")
+			t.Error("Should have been routed but wasn't.")
 		}
 	})
 	subrouter.Get("/a", func(w ResponseWriter, r *Request) {
 		fmt.Fprintf(w, r.RoutePath())
 	})
 
-	assert.NotPanics(t, func() {
-		rw, req := newTestRequest("GET", "/a")
-		router.ServeHTTP(rw, req)
-		assertResponse(t, rw, "/a", 200)
-	})
+	rw, req := newTestRequest("GET", "/a")
+	router.ServeHTTP(rw, req)
+	assertResponse(t, rw, "/a", 200)
 }
