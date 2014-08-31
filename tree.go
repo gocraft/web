@@ -125,7 +125,7 @@ func (leaf *pathLeaf) match(wildcardValues []string) bool {
 
 	// Invariant:
 	if len(leaf.regexps) != len(wildcardValues) {
-		panic("bug of some sort")
+		panic("bug: invariant violated")
 	}
 
 	for i, r := range leaf.regexps {

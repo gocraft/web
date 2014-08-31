@@ -225,7 +225,7 @@ func (rootRouter *Router) handlePanic(rw *AppResponseWriter, req *Request, err i
 			if targetRouter.contextType != curContextStruct.Type() {
 				context = curContextStruct.Field(0)
 				if reflect.Indirect(context).Type() != targetRouter.contextType {
-					panic("oshit why")
+					panic("bug: shouldn't get here")
 				}
 			}
 		}

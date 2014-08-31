@@ -1,9 +1,12 @@
 package web
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -130,6 +133,30 @@ func TestNonRootMiddlewarePanic(t *testing.T) {
 	rw, req := newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
 	assertResponse(t, rw, "Admin Error", 500)
+}
+
+func TestPanicLogging(t *testing.T) {
+	var buf bytes.Buffer
+
+	// Set the panichandler to our own time, then set it back after the test is done:
+	oldHandler := PanicHandler
+	PanicHandler = logPanicReporter{
+		log: log.New(&buf, "", 0),
+	}
+	defer func() {
+		PanicHandler = oldHandler
+	}()
+
+	router := New(Context{})
+	router.Get("/action", (*Context).ErrorAction)
+
+	rw, req := newTestRequest("GET", "/action")
+	router.ServeHTTP(rw, req)
+	assertResponse(t, rw, "Application Error", 500)
+
+	if !strings.HasPrefix(buf.String(), "PANIC") {
+		t.Error("Expected to have our PanicHandler be logged to.")
+	}
 }
 
 func TestConsistentContext(t *testing.T) {
