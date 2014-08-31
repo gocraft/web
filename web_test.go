@@ -19,6 +19,8 @@ func (l nullPanicReporter) Panic(url string, err interface{}, stack string) {
 	// no op
 }
 func init() {
+	// This disables printing panics to stderr during testing, because that is very noisy,
+	// and we purposefully test some panics.
 	PanicHandler = nullPanicReporter{}
 }
 

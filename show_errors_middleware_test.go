@@ -22,7 +22,7 @@ func TestShowErrorsMiddleware(t *testing.T) {
 	if rw.Code != 500 {
 		t.Errorf("Expected status code 500 but got %d", rw.Code)
 	}
-	
+
 	body := strings.TrimSpace(string(rw.Body.Bytes()))
 	if !strings.HasPrefix(body, "<html>") {
 		t.Errorf("Expected an HTML page but got '%s'", body)

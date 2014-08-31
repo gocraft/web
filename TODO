@@ -4,8 +4,6 @@ TODO:
    - HTTPMethod
    - HTTPMethods
  - Code coverage
-   - setup: Post, Put, Delete, Patch
-   - show errors middleware
    - IsRouted, RoutePath
    - PanicHandler
    - Invalid handlers?

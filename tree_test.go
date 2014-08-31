@@ -288,3 +288,40 @@ func TestRoutesWithPrefix(t *testing.T) {
 		}
 	}
 }
+
+func TestRouteVerbs(t *testing.T) {
+	router := New(Context{})
+	router.Get("/a", func(w ResponseWriter, r *Request) {
+		fmt.Fprintf(w, "GET")
+	})
+	router.Put("/a", func(w ResponseWriter, r *Request) {
+		fmt.Fprintf(w, "PUT")
+	})
+	router.Post("/a", func(w ResponseWriter, r *Request) {
+		fmt.Fprintf(w, "POST")
+	})
+	router.Delete("/a", func(w ResponseWriter, r *Request) {
+		fmt.Fprintf(w, "DELETE")
+	})
+	router.Patch("/a", func(w ResponseWriter, r *Request) {
+		fmt.Fprintf(w, "PATCH")
+	})
+
+	for _, method := range HTTPMethods {
+		method := string(method)
+
+		recorder := httptest.NewRecorder()
+		request, _ := http.NewRequest(method, "/a", nil)
+
+		router.ServeHTTP(recorder, request)
+
+		if recorder.Code != 200 {
+			t.Error("Test:", method, " Didn't get Code=200. Got Code=", recorder.Code)
+		}
+
+		body := strings.TrimSpace(string(recorder.Body.Bytes()))
+		if body != method {
+			t.Error("Test:", method, " Didn't get Body=", method, ". Got Body=", body)
+		}
+	}
+}
