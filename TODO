@@ -1,6 +1,4 @@
 TODO:
- - Make the logger be an interface that does Printf.
- - Add tests for the static middleware.
  - Adjust the exportedness of some things.
  - Go vet
  - Go lint

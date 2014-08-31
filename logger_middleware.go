@@ -1,9 +1,13 @@
 package web
 
 import (
-	"fmt"
+	"log"
+	"os"
 	"time"
 )
+
+// Logger can be set to your own logger if you wish
+var Logger = log.New(os.Stdout, "", 0)
 
 // LoggerMiddleware is generic middleware that will log requests to Stdout.
 func LoggerMiddleware(rw ResponseWriter, req *Request, next NextMiddlewareFunc) {
@@ -24,5 +28,5 @@ func LoggerMiddleware(rw ResponseWriter, req *Request, next NextMiddlewareFunc) 
 		durationUnits = "ns"
 	}
 
-	fmt.Printf("[%d %s] %d '%s'\n", duration, durationUnits, rw.StatusCode(), req.URL.Path)
+	Logger.Printf("[%d %s] %d '%s'\n", duration, durationUnits, rw.StatusCode(), req.URL.Path)
 }
