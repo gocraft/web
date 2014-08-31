@@ -241,7 +241,7 @@ func (rootRouter *Router) handlePanic(rw *AppResponseWriter, req *Request, err i
 	stack := make([]byte, size)
 	stack = stack[:runtime.Stack(stack, false)]
 
-	ERROR.Printf("PANIC\nURL: %v\nERROR: %v\nSTACK:\n%s\n", req.URL, err, string(stack))
+	PanicHandler.Panic(fmt.Sprint(req.URL), err, string(stack))
 }
 
 func invoke(handler reflect.Value, ctx reflect.Value, values []reflect.Value) {

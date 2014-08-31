@@ -1,13 +1,12 @@
 TODO:
  - Make the logger be an interface that does Printf.
- - Refactor tests to not use any external tools.
  - Add tests for the static middleware.
  - Adjust the exportedness of some things.
  - Go vet
  - Go lint
+ - Godoc -- make sure everything is commented.
  - Code coverage
  - Investigate sync.Pool
  - Investigate using julian's router.
  - Head middleware?
- - Godoc -- make sure everything is commented.  
-
+ - See what I can do about injecting your own logger?

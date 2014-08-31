@@ -13,6 +13,15 @@ import (
 // This file will contain helpers and general things the rest of the suite needs
 //
 
+type nullPanicReporter struct{}
+
+func (l nullPanicReporter) Panic(url string, err interface{}, stack string) {
+	// no op
+}
+func init() {
+	PanicHandler = nullPanicReporter{}
+}
+
 // Return's the caller's caller info.
 func callerInfo() string {
 	_, file, line, ok := runtime.Caller(2)

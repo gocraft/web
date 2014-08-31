@@ -21,7 +21,7 @@ func TestNoErrorHandler(t *testing.T) {
 
 	rw, req := newTestRequest("GET", "/action")
 	router.ServeHTTP(rw, req)
-	assertResponse(t, rw, "Application Error", http.StatusInternalServerError)
+	assertResponse(t, rw, "Application Errdor", http.StatusInternalServerError)
 
 	rw, req = newTestRequest("GET", "/admin/action")
 	router.ServeHTTP(rw, req)
