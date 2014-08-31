@@ -1,4 +1,19 @@
-Result of running `go test speed_test.go -test.bench=.* -test.benchmem=true` on my 1.8 GHz Macbook Air:
+Result of running `go test speed_test.go -test.bench=.* -test.benchmem=true` on my 2.3 GHz Macbook Pro.
+
+2014/08/30 commit 056ab3d12ad9e8120f7818454ee5c27c478e2b3d (minor tweaks)
+BenchmarkGocraftWeb_Simple	 2000000	       788 ns/op	     347 B/op	       7 allocs/op
+BenchmarkGocraftWeb_Route15	 1000000	      2329 ns/op	     736 B/op	      10 allocs/op
+BenchmarkGocraftWeb_Route75	 1000000	      2339 ns/op	     735 B/op	      10 allocs/op
+BenchmarkGocraftWeb_Route150	 1000000	      2331 ns/op	     737 B/op	      10 allocs/op
+BenchmarkGocraftWeb_Route300	 1000000	      2329 ns/op	     736 B/op	      10 allocs/op
+BenchmarkGocraftWeb_Route3000	 1000000	      2392 ns/op	     738 B/op	      10 allocs/op
+BenchmarkGocraftWeb_Middleware	  200000	      6533 ns/op	    1690 B/op	      23 allocs/op
+BenchmarkGocraftWeb_Generic	 1000000	      1428 ns/op	     486 B/op	       9 allocs/op
+BenchmarkGocraftWeb_Composite	  200000	      8018 ns/op	    1851 B/op	      23 allocs/op
+
+//
+// Everything below is via a slower Macbook Air (1.8 GHz):
+//
 
 2013/12/15 commit a32b88c2a5e1df88a16cd909f800460ff79edbaf (playing with how dynamic handlers are invoked. middleware/composite seem to be mutually exclusive for 5k ns/op)
 BenchmarkGocraftWeb_Simple	 1000000	      1216 ns/op	     333 B/op	       7 allocs/op
