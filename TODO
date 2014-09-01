@@ -1,4 +1,0 @@
-TODO:
- - Investigate sync.Pool
- - Investigate using julian's router.
- - investigate http.Hijacker and http.Flusher
