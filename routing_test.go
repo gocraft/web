@@ -307,7 +307,7 @@ func TestRouteVerbs(t *testing.T) {
 		fmt.Fprintf(w, "PATCH")
 	})
 
-	for _, method := range HTTPMethods {
+	for _, method := range httpMethods {
 		method := string(method)
 
 		recorder := httptest.NewRecorder()

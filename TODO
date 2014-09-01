@@ -1,8 +1,6 @@
 TODO:
  - Adjust the exportedness of some things.
-   - AppResponseWriter
-   - HTTPMethod
-   - HTTPMethods
+   - Route
  - Go lint
  - Godoc -- make sure everything is commented.
  - Investigate sync.Pool
