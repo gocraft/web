@@ -306,6 +306,9 @@ func TestRouteVerbs(t *testing.T) {
 	router.Patch("/a", func(w ResponseWriter, r *Request) {
 		fmt.Fprintf(w, "PATCH")
 	})
+	router.Head("/a", func(w ResponseWriter, r *Request) {
+		fmt.Fprintf(w, "HEAD")
+	})
 
 	for _, method := range httpMethods {
 		method := string(method)
@@ -324,6 +327,19 @@ func TestRouteVerbs(t *testing.T) {
 			t.Error("Test:", method, " Didn't get Body=", method, ". Got Body=", body)
 		}
 	}
+}
+
+func TestRouteHead(t *testing.T) {
+	router := New(Context{})
+	router.Get("/a", (*Context).A)
+
+	rw, req := newTestRequest("GET", "/a")
+	router.ServeHTTP(rw, req)
+	assertResponse(t, rw, "context-A", 200)
+
+	rw, req = newTestRequest("HEAD", "/a")
+	router.ServeHTTP(rw, req)
+	assertResponse(t, rw, "context-A", 200)
 }
 
 func TestIsRouted(t *testing.T) {

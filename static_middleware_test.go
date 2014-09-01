@@ -23,6 +23,10 @@ func TestStaticMiddleware(t *testing.T) {
 	rw, req = newTestRequest("GET", "/"+testFilename())
 	router.ServeHTTP(rw, req)
 	assertResponse(t, rw, strings.TrimSpace(routerSetupBody()), 200)
+
+	rw, req = newTestRequest("POST", "/"+testFilename())
+	router.ServeHTTP(rw, req)
+	assertResponse(t, rw, "Not Found", 404)
 }
 
 // TestStaticMiddlewareIndex will create an assets folder with one nested subfolder. Each folder will have an index.html file.

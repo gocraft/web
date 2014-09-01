@@ -1,5 +1,4 @@
 TODO:
  - Investigate sync.Pool
  - Investigate using julian's router.
- - Head middleware?
  - investigate http.Hijacker and http.Flusher

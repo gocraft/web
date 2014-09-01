@@ -14,6 +14,11 @@ import (
 func StaticMiddleware(path string) func(ResponseWriter, *Request, NextMiddlewareFunc) {
 	dir := http.Dir(path)
 	return func(w ResponseWriter, req *Request, next NextMiddlewareFunc) {
+		if req.Method != "GET" && req.Method != "HEAD" {
+			next(w, req)
+			return
+		}
+
 		file := req.URL.Path
 		f, err := dir.Open(file)
 		if err != nil {
