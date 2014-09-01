@@ -5,8 +5,12 @@ import (
 	"path/filepath"
 )
 
-// StaticMiddleware("public") returns proper middleware
-// NOTE: original impl is from github.com/codegangsta/martini
+// StaticMiddleware returns a middleware that serves static files from the specified folder.
+// This middleware is great for development because each file is read from disk each time and no
+// special caching or cache headers are sent.
+//
+// If a path is requested which maps to a folder with an index.html folder on your filesystem,
+// then that index.html file will be served.
 func StaticMiddleware(path string) func(ResponseWriter, *Request, NextMiddlewareFunc) {
 	dir := http.Dir(path)
 	return func(w ResponseWriter, req *Request, next NextMiddlewareFunc) {

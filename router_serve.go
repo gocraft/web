@@ -255,5 +255,8 @@ func invoke(handler reflect.Value, ctx reflect.Value, values []reflect.Value) {
 	}
 }
 
+// DefaultNotFoundResponse is the default text rendered when no route is found and no NotFound handlers are present.
 var DefaultNotFoundResponse = "Not Found"
+
+// DefaultPanicResponse is the default text rendered when a panic occurs and no Error handlers are present.
 var DefaultPanicResponse = "Application Error"

@@ -1,8 +1,4 @@
 TODO:
- - Adjust the exportedness of some things.
-   - Route
- - Go lint
- - Godoc -- make sure everything is commented.
  - Investigate sync.Pool
  - Investigate using julian's router.
  - Head middleware?

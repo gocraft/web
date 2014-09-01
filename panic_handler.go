@@ -14,9 +14,9 @@ type PanicReporter interface {
 // PanicHandler will be logged to in panic conditions (eg, division by zero in an app handler).
 // Applications can set web.PanicHandler = your own logger, if they wish.
 // In terms of logging the requests / responses, see logger_middleware. That is a completely separate system.
-var PanicHandler PanicReporter = logPanicReporter{
+var PanicHandler = PanicReporter(logPanicReporter{
 	log: log.New(os.Stderr, "ERROR ", log.Ldate|log.Ltime|log.Lmicroseconds|log.Lshortfile),
-}
+})
 
 type logPanicReporter struct {
 	log *log.Logger

@@ -17,8 +17,7 @@ const (
 
 var httpMethods = []httpMethod{httpMethodGet, httpMethodPost, httpMethodPut, httpMethodDelete, httpMethodPatch}
 
-var emptyInterfaceType = reflect.TypeOf((*interface{})(nil)).Elem()
-
+// Router implements net/http's Handler interface and is what you attach middleware, routes/handlers, and subrouters to.
 type Router struct {
 	// Hierarchy:
 	parent           *Router // nil if root router.
@@ -46,6 +45,20 @@ type Router struct {
 	notFoundHandler reflect.Value
 }
 
+// NextMiddlewareFunc are functions passed into your middleware. To advance the middleware, call the function.
+// You should usually pass the existing ResponseWriter and *Request into the next middlware, but you can
+// chose to swap them if you want to modify values or capture things written to the ResponseWriter.
+type NextMiddlewareFunc func(ResponseWriter, *Request)
+
+// GenericMiddleware are middleware that doesn't have or need a context. General purpose middleware, such as
+// static file serving, has this signature. If your middlware doesn't need a context, you can use this
+// signature to get a small performance boost.
+type GenericMiddleware func(ResponseWriter, *Request, NextMiddlewareFunc)
+
+// GenericHandler are handlers that don't have or need a context. If your handler doesn't need a context,
+// you can use this signature to get a small performance boost.
+type GenericHandler func(ResponseWriter, *Request)
+
 type route struct {
 	Router  *Router
 	Method  httpMethod
@@ -65,10 +78,11 @@ type actionHandler struct {
 	GenericHandler GenericHandler
 }
 
-type NextMiddlewareFunc func(ResponseWriter, *Request)
-type GenericMiddleware func(ResponseWriter, *Request, NextMiddlewareFunc)
-type GenericHandler func(ResponseWriter, *Request)
+var emptyInterfaceType = reflect.TypeOf((*interface{})(nil)).Elem()
 
+// New returns a new router with context type ctx. ctx should be a struct instance,
+// whose purpose is to communicate type information. On each request, an instance of this
+// context type will be automatically allocated and sent to handlers.
 func New(ctx interface{}) *Router {
 	validateContext(ctx, nil)
 
@@ -83,6 +97,8 @@ func New(ctx interface{}) *Router {
 	return r
 }
 
+// NewWithPrefix returns a new router (see New) but each route will have an implicit prefix.
+// For instance, with pathPrefix = "/api/v2", all routes under this router will begin with "/api/v2".
 func NewWithPrefix(ctx interface{}, pathPrefix string) *Router {
 	r := New(ctx)
 	r.pathPrefix = pathPrefix
@@ -90,6 +106,10 @@ func NewWithPrefix(ctx interface{}, pathPrefix string) *Router {
 	return r
 }
 
+// Subrouter attaches a new subrouter to the specified router and returns it.
+// You can use the same context or pass a new one. If you pass a new one, it must
+// embed a pointer to the previous context in the first slot. You can also pass
+// a pathPrefix that each route will have. If "" is passed, then no path prefix is applied.
 func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 	validateContext(ctx, r.contextType)
 
@@ -113,6 +133,7 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 	return newRouter
 }
 
+// Middleware adds the specified middleware tot he router and returns the router.
 func (r *Router) Middleware(fn interface{}) *Router {
 	vfn := reflect.ValueOf(fn)
 	validateMiddleware(vfn, r.contextType)
@@ -125,44 +146,51 @@ func (r *Router) Middleware(fn interface{}) *Router {
 	return r
 }
 
-func (r *Router) Error(fn interface{}) {
+// Error sets the specified function as the error handler (when panics happen) and returns the router.
+func (r *Router) Error(fn interface{}) *Router {
 	vfn := reflect.ValueOf(fn)
 	validateErrorHandler(vfn, r.contextType)
 	r.errorHandler = vfn
+	return r
 }
 
-func (r *Router) NotFound(fn interface{}) {
+// NotFound sets the specified function as the not-found handler (when no route matches) and returns the router.
+// Note that only the root router can have a NotFound handler.
+func (r *Router) NotFound(fn interface{}) *Router {
 	if r.parent != nil {
 		panic("You can only set a NotFoundHandler on the root router.")
 	}
 	vfn := reflect.ValueOf(fn)
 	validateNotFoundHandler(vfn, r.contextType)
 	r.notFoundHandler = vfn
+	return r
 }
 
+// Get will add a route to the router that matches on GET requests and the specified path.
 func (r *Router) Get(path string, fn interface{}) *Router {
 	return r.addRoute(httpMethodGet, path, fn)
 }
 
+// Post will add a route to the router that matches on POST requests and the specified path.
 func (r *Router) Post(path string, fn interface{}) *Router {
 	return r.addRoute(httpMethodPost, path, fn)
 }
 
+// Put will add a route to the router that matches on PUT requests and the specified path.
 func (r *Router) Put(path string, fn interface{}) *Router {
 	return r.addRoute(httpMethodPut, path, fn)
 }
 
+// Delete will add a route to the router that matches on DELETE requests and the specified path.
 func (r *Router) Delete(path string, fn interface{}) *Router {
 	return r.addRoute(httpMethodDelete, path, fn)
 }
 
+// Patch will add a route to the router that matches on PATCH requests and the specified path.
 func (r *Router) Patch(path string, fn interface{}) *Router {
 	return r.addRoute(httpMethodPatch, path, fn)
 }
 
-//
-//
-//
 func (r *Router) addRoute(method httpMethod, path string, fn interface{}) *Router {
 	vfn := reflect.ValueOf(fn)
 	validateHandler(vfn, r.contextType)

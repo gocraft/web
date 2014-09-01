@@ -4,8 +4,12 @@ import (
 	"net/http"
 )
 
+// ResponseWriter includes net/http's ResponseWriter and adds a StatusCode() method to obtain the written status code.
+// A ResponseWriter is sent to handlers on each request.
 type ResponseWriter interface {
 	http.ResponseWriter
+
+	// StatusCode returns the written status code, or 0 if none has been written yet.
 	StatusCode() int
 }
 

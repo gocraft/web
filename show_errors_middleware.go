@@ -9,10 +9,8 @@ import (
 	"strings"
 )
 
-//
-// This is development-only middleware. It was more or less copied from github.com/pilu/traffic
-//
-
+// ShowErrorsMiddleware will catch panics and render an HTML page with the stack trace.
+// This middleware should only be used in development.
 func ShowErrorsMiddleware(rw ResponseWriter, req *Request, next NextMiddlewareFunc) {
 	defer func() {
 		if err := recover(); err != nil {
