@@ -9,14 +9,14 @@ type ResponseWriter interface {
 	StatusCode() int
 }
 
-type AppResponseWriter struct {
+type appResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 	written    bool
 }
 
 // Don't need this yet because we get it for free:
-func (w *AppResponseWriter) Write(data []byte) (n int, err error) {
+func (w *appResponseWriter) Write(data []byte) (n int, err error) {
 	if !w.written {
 		w.statusCode = http.StatusOK
 		w.written = true
@@ -24,12 +24,12 @@ func (w *AppResponseWriter) Write(data []byte) (n int, err error) {
 	return w.ResponseWriter.Write(data)
 }
 
-func (w *AppResponseWriter) WriteHeader(statusCode int) {
+func (w *appResponseWriter) WriteHeader(statusCode int) {
 	w.statusCode = statusCode
 	w.written = true
 	w.ResponseWriter.WriteHeader(statusCode)
 }
 
-func (w *AppResponseWriter) StatusCode() int {
+func (w *appResponseWriter) StatusCode() int {
 	return w.statusCode
 }

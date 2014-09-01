@@ -8,3 +8,4 @@ TODO:
  - Investigate sync.Pool
  - Investigate using julian's router.
  - Head middleware?
+ - Address TODOs

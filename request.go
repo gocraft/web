@@ -8,7 +8,7 @@ import (
 type Request struct {
 	*http.Request
 
-	// This map exists if you have wildcards in your URL that you need to capture.
+	// PathParams exists if you have wildcards in your URL that you need to capture.
 	// Eg, /users/:id/tickets/:ticket_id and /users/1/tickets/33 would yield the map {id: "3", ticket_id: "33"}
 	PathParams map[string]string
 
