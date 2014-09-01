@@ -33,7 +33,7 @@ type Router struct {
 
 	// Routeset contents:
 	middleware []*middlewareHandler
-	routes     []*Route
+	routes     []*route
 
 	// The root pathnode is the same for a tree of Routers
 	root map[httpMethod]*pathNode
@@ -46,7 +46,7 @@ type Router struct {
 	notFoundHandler reflect.Value
 }
 
-type Route struct {
+type route struct {
 	Router  *Router
 	Method  httpMethod
 	Path    string
@@ -167,7 +167,7 @@ func (r *Router) addRoute(method httpMethod, path string, fn interface{}) *Route
 	vfn := reflect.ValueOf(fn)
 	validateHandler(vfn, r.contextType)
 	fullPath := appendPath(r.pathPrefix, path)
-	route := &Route{Method: method, Path: fullPath, Router: r}
+	route := &route{Method: method, Path: fullPath, Router: r}
 	if vfn.Type().NumIn() == 2 {
 		route.Handler = &actionHandler{Generic: true, GenericHandler: fn.(func(ResponseWriter, *Request))}
 	} else {

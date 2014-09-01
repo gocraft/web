@@ -144,7 +144,7 @@ func (mw *middlewareHandler) invoke(ctx reflect.Value, rw ResponseWriter, req *R
 // 	}
 // }
 
-func calculateRoute(rootRouter *Router, req *Request) (*Route, map[string]string) {
+func calculateRoute(rootRouter *Router, req *Request) (*route, map[string]string) {
 	var leaf *pathLeaf
 	var wildcardMap map[string]string
 	tree, ok := rootRouter.root[httpMethod(req.Method)]
@@ -160,7 +160,7 @@ func calculateRoute(rootRouter *Router, req *Request) (*Route, map[string]string
 
 // given the route (and target router), return [root router, child router, ..., leaf route's router]
 // Use the memory in routers to store this information
-func routersFor(route *Route, routers []*Router) []*Router {
+func routersFor(route *route, routers []*Router) []*Router {
 	routers = routers[:0]
 	curRouter := route.Router
 	for curRouter != nil {

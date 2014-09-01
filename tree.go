@@ -36,18 +36,18 @@ type pathLeaf struct {
 	regexps []*regexp.Regexp
 
 	// Pointer back to the route
-	route *Route
+	route *route
 }
 
 func newPathNode() *pathNode {
 	return &pathNode{edges: make(map[string]*pathNode)}
 }
 
-func (pn *pathNode) add(path string, route *Route) {
+func (pn *pathNode) add(path string, route *route) {
 	pn.addInternal(splitPath(path), route, nil, nil)
 }
 
-func (pn *pathNode) addInternal(segments []string, route *Route, wildcards []string, regexps []*regexp.Regexp) {
+func (pn *pathNode) addInternal(segments []string, route *route, wildcards []string, regexps []*regexp.Regexp) {
 	if len(segments) == 0 {
 		allNilRegexps := true
 		for _, r := range regexps {

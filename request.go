@@ -13,7 +13,7 @@ type Request struct {
 	PathParams map[string]string
 
 	// The actual route that got invoked
-	route *Route
+	route *route
 
 	rootContext   reflect.Value // Root context. Set immediately.
 	targetContext reflect.Value // The target context corresponding to the route. Not set until root middleware is done.
