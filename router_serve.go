@@ -7,7 +7,6 @@ import (
 	"runtime"
 )
 
-// TODO: normalize the exportedness
 type middlewareClosure struct {
 	appResponseWriter
 	Request
@@ -20,7 +19,7 @@ type middlewareClosure struct {
 	Next                   NextMiddlewareFunc
 }
 
-// This is the entry point for servering all requests
+// This is the entry point for servering all requests.
 func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	// Manually create a closure. These variables are needed in middlewareStack.

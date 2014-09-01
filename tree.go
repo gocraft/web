@@ -60,7 +60,6 @@ func (pn *pathNode) addInternal(segments []string, route *route, wildcards []str
 			regexps = nil
 		}
 		pn.leaves = append(pn.leaves, &pathLeaf{route: route, wildcards: wildcards, regexps: regexps})
-		// TODO: ? detect if we have duplicate leaves. (eg, 2 routes that are exactly the same)
 	} else { // len(segments) >= 1
 		seg := segments[0]
 		wc, wcName, wcRegexpStr := isWildcard(seg)
