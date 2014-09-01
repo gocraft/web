@@ -6,10 +6,10 @@ import (
 	"time"
 )
 
-// Logger can be set to your own logger if you wish
+// Logger can be set to your own logger. Logger only applies to the LoggerMiddleware.
 var Logger = log.New(os.Stdout, "", 0)
 
-// LoggerMiddleware is generic middleware that will log requests to Stdout.
+// LoggerMiddleware is generic middleware that will log requests to Logger (by default, Stdout).
 func LoggerMiddleware(rw ResponseWriter, req *Request, next NextMiddlewareFunc) {
 	startTime := time.Now()
 
