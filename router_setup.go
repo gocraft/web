@@ -6,6 +6,7 @@ import (
 )
 
 type httpMethod string
+type httpPath string
 
 const (
 	httpMethodGet    = httpMethod("GET")
@@ -20,6 +21,7 @@ var httpMethods = []httpMethod{httpMethodGet, httpMethodPost, httpMethodPut, htt
 
 // Router implements net/http's Handler interface and is what you attach middleware, routes/handlers, and subrouters to.
 type Router struct {
+	Description map[httpMethod]map[httpPath][]string
 	// Hierarchy:
 	parent           *Router // nil if root router.
 	children         []*Router
@@ -92,8 +94,10 @@ func New(ctx interface{}) *Router {
 	r.pathPrefix = "/"
 	r.maxChildrenDepth = 1
 	r.root = make(map[httpMethod]*pathNode)
+	r.Description = make(map[httpMethod]map[httpPath][]string)
 	for _, method := range httpMethods {
 		r.root[method] = newPathNode()
+		r.Description[method] = make(map[httpPath][]string)
 	}
 	return r
 }
@@ -130,6 +134,11 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 	newRouter.contextType = reflect.TypeOf(ctx)
 	newRouter.pathPrefix = appendPath(r.pathPrefix, pathPrefix)
 	newRouter.root = r.root
+
+	newRouter.Description = make(map[httpMethod]map[httpPath][]string)
+	for _, method := range httpMethods {
+		newRouter.Description[method] = make(map[httpPath][]string)
+	}
 
 	return newRouter
 }
@@ -168,36 +177,36 @@ func (r *Router) NotFound(fn interface{}) *Router {
 }
 
 // Get will add a route to the router that matches on GET requests and the specified path.
-func (r *Router) Get(path string, fn interface{}) *Router {
-	return r.addRoute(httpMethodGet, path, fn)
+func (r *Router) Get(path string, fn interface{}, desc ...string) *Router {
+	return r.addRoute(httpMethodGet, path, fn, desc...)
 }
 
 // Post will add a route to the router that matches on POST requests and the specified path.
-func (r *Router) Post(path string, fn interface{}) *Router {
-	return r.addRoute(httpMethodPost, path, fn)
+func (r *Router) Post(path string, fn interface{}, desc ...string) *Router {
+	return r.addRoute(httpMethodPost, path, fn, desc...)
 }
 
 // Put will add a route to the router that matches on PUT requests and the specified path.
-func (r *Router) Put(path string, fn interface{}) *Router {
-	return r.addRoute(httpMethodPut, path, fn)
+func (r *Router) Put(path string, fn interface{}, desc ...string) *Router {
+	return r.addRoute(httpMethodPut, path, fn, desc...)
 }
 
 // Delete will add a route to the router that matches on DELETE requests and the specified path.
-func (r *Router) Delete(path string, fn interface{}) *Router {
-	return r.addRoute(httpMethodDelete, path, fn)
+func (r *Router) Delete(path string, fn interface{}, desc ...string) *Router {
+	return r.addRoute(httpMethodDelete, path, fn, desc...)
 }
 
 // Patch will add a route to the router that matches on PATCH requests and the specified path.
-func (r *Router) Patch(path string, fn interface{}) *Router {
-	return r.addRoute(httpMethodPatch, path, fn)
+func (r *Router) Patch(path string, fn interface{}, desc ...string) *Router {
+	return r.addRoute(httpMethodPatch, path, fn, desc...)
 }
 
 // Head will add a route to the router that matches on HEAD requests and the specified path.
-func (r *Router) Head(path string, fn interface{}) *Router {
-	return r.addRoute(httpMethodHead, path, fn)
+func (r *Router) Head(path string, fn interface{}, desc ...string) *Router {
+	return r.addRoute(httpMethodHead, path, fn, desc...)
 }
 
-func (r *Router) addRoute(method httpMethod, path string, fn interface{}) *Router {
+func (r *Router) addRoute(method httpMethod, path string, fn interface{}, desc ...string) *Router {
 	vfn := reflect.ValueOf(fn)
 	validateHandler(vfn, r.contextType)
 	fullPath := appendPath(r.pathPrefix, path)
@@ -209,6 +218,9 @@ func (r *Router) addRoute(method httpMethod, path string, fn interface{}) *Route
 	}
 	r.routes = append(r.routes, route)
 	r.root[method].add(fullPath, route)
+	if desc != nil {
+		r.Description[method][httpPath(fullPath)] = desc
+	}
 	return r
 }
 
