@@ -309,6 +309,9 @@ func TestRouteVerbs(t *testing.T) {
 	router.Head("/a", func(w ResponseWriter, r *Request) {
 		fmt.Fprintf(w, "HEAD")
 	})
+	router.Options("/a", func(w ResponseWriter, r *Request) {
+		fmt.Fprintf(w, "OPTIONS")
+	})
 
 	for _, method := range httpMethods {
 		method := string(method)
