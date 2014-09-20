@@ -14,9 +14,10 @@ const (
 	httpMethodDelete = httpMethod("DELETE")
 	httpMethodPatch  = httpMethod("PATCH")
 	httpMethodHead   = httpMethod("HEAD")
+	httpMethodOptions   = httpMethod("OPTIONS")
 )
 
-var httpMethods = []httpMethod{httpMethodGet, httpMethodPost, httpMethodPut, httpMethodDelete, httpMethodPatch, httpMethodHead}
+var httpMethods = []httpMethod{httpMethodGet, httpMethodPost, httpMethodPut, httpMethodDelete, httpMethodPatch, httpMethodHead, httpMethodOptions}
 
 // Router implements net/http's Handler interface and is what you attach middleware, routes/handlers, and subrouters to.
 type Router struct {
@@ -195,6 +196,11 @@ func (r *Router) Patch(path string, fn interface{}) *Router {
 // Head will add a route to the router that matches on HEAD requests and the specified path.
 func (r *Router) Head(path string, fn interface{}) *Router {
 	return r.addRoute(httpMethodHead, path, fn)
+}
+
+// Options will add a route to the router that matches on OPTIONS requests and the specified path.
+func (r *Router) Options(path string, fn interface{}) *Router {
+	return r.addRoute(httpMethodOptions, path, fn)
 }
 
 func (r *Router) addRoute(method httpMethod, path string, fn interface{}) *Router {
