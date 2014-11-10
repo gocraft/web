@@ -30,7 +30,7 @@ func TestStaticMiddleware(t *testing.T) {
 }
 
 // TestStaticMiddlewareIndex will create an assets folder with one nested subfolder. Each folder will have an index.html file.
-func TestStaticMiddlewareIndex(t *testing.T) {
+func TestStaticMiddlewareOptionIndex(t *testing.T) {
 	// Create two temporary folders:
 	dirName, err := ioutil.TempDir("", "")
 	if err != nil {
@@ -62,7 +62,7 @@ func TestStaticMiddlewareIndex(t *testing.T) {
 
 	// Make router. Static middleware rooted at first temp dir
 	router := New(Context{})
-	router.Middleware(StaticMiddleware(dirName))
+	router.Middleware(StaticMiddleware(dirName, StaticOption{IndexFile: "index.html"}))
 	router.Get("/action", (*Context).A)
 
 	// Getting a root index:
@@ -79,6 +79,26 @@ func TestStaticMiddlewareIndex(t *testing.T) {
 	rw, req = newTestRequest("GET", "/"+nestedDirSegment+"/")
 	router.ServeHTTP(rw, req)
 	assertResponse(t, rw, "index2", 200)
+}
+
+func TestStaticMiddlewareOptionPrefix(t *testing.T) {
+	currentRoot, _ := os.Getwd()
+
+	router := New(Context{})
+	router.Middleware(StaticMiddleware(currentRoot, StaticOption{Prefix: "/public"}))
+	router.Get("/action", (*Context).A)
+
+	rw, req := newTestRequest("GET", "/action")
+	router.ServeHTTP(rw, req)
+	assertResponse(t, rw, "context-A", 200)
+
+	rw, req = newTestRequest("GET", "/"+testFilename())
+	router.ServeHTTP(rw, req)
+	assertResponse(t, rw, "Not Found", 404)
+
+	rw, req = newTestRequest("GET", "/public/"+testFilename())
+	router.ServeHTTP(rw, req)
+	assertResponse(t, rw, strings.TrimSpace(routerSetupBody()), 200)
 }
 
 func testFilename() string {
