@@ -330,6 +330,16 @@ This package is going to keep the built-in middlware simple and lean. Extra midd
 
 If you'd like me to link to your middleware, let me know with a pull request to this README.
 
+## gocraft
+
+gocraft offers a toolkit for building web apps. Currently these packages are available:
+
+* [gocraft/web](https://github.com/gocraft/web) - Go Router + Middleware. Your Contexts.
+* [gocraft/dbr](https://github.com/gocraft/dbr) - Additions to Go's database/sql for super fast performance and convenience.
+* [gocraft/health](https://github.com/gocraft/health) -  Instrument your web apps with logging and metrics.
+
+These packages were developed by the [engineering team](https://eng.uservoice.com) at [UserVoice](https://www.uservoice.com) and currently power much of its infrastructure and tech stack.
+
 ## Thanks & Authors
 I use code/got inspiration from these excellent libraries:
 *  [Revel](https://github.com/robfig/revel) - pathtree routing.
@@ -339,3 +349,4 @@ I use code/got inspiration from these excellent libraries:
 
 Authors:
 *  Jonathan Novak -- [https://github.com/cypriss](https://github.com/cypriss)
+*  Sponsored by [UserVoice](https://eng.uservoice.com)
