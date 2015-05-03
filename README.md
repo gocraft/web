@@ -327,6 +327,7 @@ This is currently where the implementation of this library stops. I recommend yo
 ## Extra Middlware
 This package is going to keep the built-in middlware simple and lean. Extra middleware can be found across the web:
 *  [https://github.com/opennota/json-binding](https://github.com/opennota/json-binding) - mapping JSON request into a struct
+*  [https://github.com/corneldamian/json-binding](https://github.com/corneldamian/json-binding) - mapping JSON request into a struct and response to json
 
 If you'd like me to link to your middleware, let me know with a pull request to this README.
 
