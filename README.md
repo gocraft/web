@@ -251,7 +251,7 @@ You can match any route past a certain point like this:
 router.Get("/suggestions/:suggestion_id/comments/:comment_id/:*")
 ```
 
-The path params will contain a “*” member with the rest of your path.
+The path params will contain a “*” member with the rest of your path.  It is illegal to add any more paths past the “*” path param, as it’s meant to match every path afterwards, in all cases.
 
 For Example:
     /suggestions/123/comments/321/foo/879/bar/834
