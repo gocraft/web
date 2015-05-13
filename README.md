@@ -245,6 +245,23 @@ You can also validate the format of your path params with a regexp. For instance
 router.Get("/suggestions/:suggestion_id:\\d.*/comments/:comment_id:\\d.*")
 ```
 
+You can match any route past a certain point like this:
+
+```go
+router.Get("/suggestions/:suggestion_id/comments/:comment_id/:*")
+```
+
+The path params will contain a “*” member with the rest of your path.
+
+For Example:
+    /suggestions/123/comments/321/foo/879/bar/834
+
+Elicits path params:
+    * “suggestion_id”: 123,
+    * “comment_id”: 321,
+    * “*”: “foo/879/bar/834”
+
+
 One thing you CANNOT currently do is use regexps outside of a path segment. For instance, optional path segments are not supported - you would have to define multiple routes that both point to the same handler. This design decision was made to enable efficient routing.
 
 ### Not Found handlers

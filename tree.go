@@ -134,8 +134,7 @@ func (pn *pathNode) match(segments []string, wildcardValues []string) (leaf *pat
 
 	if leaf == nil && pn.matchesFullPath {
 		for _, leaf := range pn.leaves {
-			if leaf.matchesFullPath {
-				_ = "breakpoint"
+			if leaf.matchesFullPath && leaf.match(wildcardValues) {
 				if len(wildcardValues) > 0 {
 					wcVals := []string{wildcardValues[len(wildcardValues)-1], seg}
 					for _, s := range segments {
