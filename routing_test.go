@@ -137,11 +137,26 @@ func TestRoutes(t *testing.T) {
 			get:   "/site2/123/other/OK",
 			vars:  map[string]string{"id": "123", "var": "OK"},
 		},
+		{
+			route: "/site2/:id/:*",
+			get:   "/site2/1abc1/foo/bar/baz/boo",
+			vars:  map[string]string{"id": "1abc1", "*": "foo/bar/baz/boo"},
+		},
+		{
+			route: "/site3/:id:\\d+/:*",
+			get:   "/site3/123/foo/bar/baz/boo",
+			vars:  map[string]string{"id": "123", "*": "foo/bar/baz/boo"},
+		},
+		{
+			route: "/site3/:*",
+			get:   "/site3/foo/bar/baz/boo",
+			vars:  map[string]string{"*": "foo/bar/baz/boo"},
+		},
 	}
 
 	// Create routes
 	for _, rt := range table {
-		// func: ensure closure is created per iteraction (it fails otherwise)
+		//func: ensure closure is created per iteraction (it fails otherwise)
 		func(exp string) {
 			router.Get(rt.route, func(w ResponseWriter, r *Request) {
 				w.Header().Set("X-VARS", stringifyMap(r.PathParams))
