@@ -54,12 +54,7 @@ func (pn *pathNode) add(path string, route *route) {
 }
 
 func (pn *pathNode) addInternal(segments []string, route *route, wildcards []string, regexps []*regexp.Regexp) {
-	matchesFullPath := false
-	if len(wildcards) > 0 {
-		matchesFullPath = wildcards[len(wildcards)-1] == "*"
-	}
-
-	if len(segments) == 0 || matchesFullPath {
+	if len(segments) == 0 {
 		allNilRegexps := true
 		for _, r := range regexps {
 			if r != nil {
@@ -69,6 +64,11 @@ func (pn *pathNode) addInternal(segments []string, route *route, wildcards []str
 		}
 		if allNilRegexps {
 			regexps = nil
+		}
+
+		matchesFullPath := false
+		if len(wildcards) > 0 {
+			matchesFullPath = wildcards[len(wildcards)-1] == "*"
 		}
 
 		pn.leaves = append(pn.leaves, &pathLeaf{route: route, wildcards: wildcards, regexps: regexps, matchesFullPath: matchesFullPath})
