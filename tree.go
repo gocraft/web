@@ -15,6 +15,9 @@ type pathNode struct {
 
 	// If set, and we have nothing left to match, then we match on this node
 	leaves []*pathLeaf
+
+	// If true, this pathNode has a pathparam that matches the rest of the path
+	matchesFullPath bool
 }
 
 // pathLeaf represents a leaf path segment that corresponds to a single route.
@@ -37,6 +40,9 @@ type pathLeaf struct {
 
 	// Pointer back to the route
 	route *route
+
+	// If true, this leaf has a pathparam that matches the rest of the path
+	matchesFullPath bool
 }
 
 func newPathNode() *pathNode {
@@ -59,14 +65,26 @@ func (pn *pathNode) addInternal(segments []string, route *route, wildcards []str
 		if allNilRegexps {
 			regexps = nil
 		}
-		pn.leaves = append(pn.leaves, &pathLeaf{route: route, wildcards: wildcards, regexps: regexps})
+
+		matchesFullPath := false
+		if len(wildcards) > 0 {
+			matchesFullPath = wildcards[len(wildcards)-1] == "*"
+		}
+
+		pn.leaves = append(pn.leaves, &pathLeaf{route: route, wildcards: wildcards, regexps: regexps, matchesFullPath: matchesFullPath})
 	} else { // len(segments) >= 1
 		seg := segments[0]
 		wc, wcName, wcRegexpStr := isWildcard(seg)
 		if wc {
+
 			if pn.wildcard == nil {
 				pn.wildcard = newPathNode()
 			}
+
+			if !pn.wildcard.matchesFullPath {
+				pn.wildcard.matchesFullPath = wcName == "*"
+			}
+
 			pn.wildcard.addInternal(segments[1:], route, append(wildcards, wcName), append(regexps, compileRegexp(wcRegexpStr)))
 		} else {
 			subPn, ok := pn.edges[seg]
@@ -112,6 +130,22 @@ func (pn *pathNode) match(segments []string, wildcardValues []string) (leaf *pat
 
 	if leaf == nil && pn.wildcard != nil {
 		leaf, wildcardMap = pn.wildcard.match(segments, append(wildcardValues, seg))
+	}
+
+	if leaf == nil && pn.matchesFullPath {
+		for _, leaf := range pn.leaves {
+			if leaf.matchesFullPath && leaf.match(wildcardValues) {
+				if len(wildcardValues) > 0 {
+					wcVals := []string{wildcardValues[len(wildcardValues)-1], seg}
+					for _, s := range segments {
+						wcVals = append(wcVals, s)
+					}
+					wildcardValues[len(wildcardValues)-1] = strings.Join(wcVals, "/")
+				}
+				return leaf, makeWildcardMap(leaf, wildcardValues)
+			}
+		}
+		return nil, nil
 	}
 
 	return leaf, wildcardMap
