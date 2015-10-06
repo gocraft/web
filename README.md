@@ -282,6 +282,24 @@ func (c *Context) NotFound(rw web.ResponseWriter, r *web.Request) {
 }
 ```
 
+### OPTIONS handlers
+If an [OPTIONS request](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing#Preflight_example) is made and routes with other methods are found for the requested path, then by default we'll return an empty response with an appropriate `Access-Control-Allow-Methods` header.
+
+You can supply a custom OPTIONS handler on your root router:
+
+```go
+router.OptionsHandler((*Context).OptionsHandler)
+```
+
+Your handler can optionally accept a pointer to the root context. OPTIONS handlers look like this:
+
+```go
+func (c *Context) OptionsHandler(rw web.ResponseWriter, r *web.Request, methods []string) {
+	rw.Header().Add("Access-Control-Allow-Methods", strings.Join(methods, ", "))
+	rw.Header().Add("Access-Control-Allow-Origin", "*")
+}
+```
+
 ### Error handlers
 By default, if there's a panic in middleware or a handler, we'll return a 500 status and render the text "Application Error".
 

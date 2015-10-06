@@ -8,13 +8,13 @@ import (
 type httpMethod string
 
 const (
-	httpMethodGet    = httpMethod("GET")
-	httpMethodPost   = httpMethod("POST")
-	httpMethodPut    = httpMethod("PUT")
-	httpMethodDelete = httpMethod("DELETE")
-	httpMethodPatch  = httpMethod("PATCH")
-	httpMethodHead   = httpMethod("HEAD")
-	httpMethodOptions   = httpMethod("OPTIONS")
+	httpMethodGet     = httpMethod("GET")
+	httpMethodPost    = httpMethod("POST")
+	httpMethodPut     = httpMethod("PUT")
+	httpMethodDelete  = httpMethod("DELETE")
+	httpMethodPatch   = httpMethod("PATCH")
+	httpMethodHead    = httpMethod("HEAD")
+	httpMethodOptions = httpMethod("OPTIONS")
 )
 
 var httpMethods = []httpMethod{httpMethodGet, httpMethodPost, httpMethodPut, httpMethodDelete, httpMethodPatch, httpMethodHead, httpMethodOptions}
@@ -45,6 +45,9 @@ type Router struct {
 	// This can only be set on the root handler, since by virtue of not finding a route, we don't have a target.
 	// (That being said, in the future we could investigate namespace matches)
 	notFoundHandler reflect.Value
+
+	// This can only be set on the root handler, since by virtue of not finding a route, we don't have a target.
+	optionsHandler reflect.Value
 }
 
 // NextMiddlewareFunc are functions passed into your middleware. To advance the middleware, call the function.
@@ -168,6 +171,18 @@ func (r *Router) NotFound(fn interface{}) *Router {
 	return r
 }
 
+// NotFound sets the specified function as the not-found handler (when no route matches) and returns the router.
+// Note that only the root router can have a NotFound handler.
+func (r *Router) OptionsHandler(fn interface{}) *Router {
+	if r.parent != nil {
+		panic("You can only set an OptionsHandler on the root router.")
+	}
+	vfn := reflect.ValueOf(fn)
+	validateOptionsHandler(vfn, r.contextType)
+	r.optionsHandler = vfn
+	return r
+}
+
 // Get will add a route to the router that matches on GET requests and the specified path.
 func (r *Router) Get(path string, fn interface{}) *Router {
 	return r.addRoute(httpMethodGet, path, fn)
@@ -279,6 +294,15 @@ func validateNotFoundHandler(vfn reflect.Value, ctxType reflect.Type) {
 	var resp func() ResponseWriter
 	if !isValidHandler(vfn, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req)) {
 		panic(instructiveMessage(vfn, "a 'not found' handler", "not found handler", "rw web.ResponseWriter, req *web.Request", ctxType))
+	}
+}
+
+func validateOptionsHandler(vfn reflect.Value, ctxType reflect.Type) {
+	var req *Request
+	var resp func() ResponseWriter
+	var methods []string
+	if !isValidHandler(vfn, ctxType, reflect.TypeOf(resp).Out(0), reflect.TypeOf(req), reflect.TypeOf(methods)) {
+		panic(instructiveMessage(vfn, "an 'options' handler", "options handler", "rw web.ResponseWriter, req *web.Request, methods []string", ctxType))
 	}
 }
 

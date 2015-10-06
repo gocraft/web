@@ -73,8 +73,30 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 				// If we're still on the root router, it's time to actually figure out what the route is.
 				// Do so, and update the various variables.
 				// We could also 404 at this point: if so, run NotFound handlers and return.
-				route, wildcardMap := calculateRoute(closure.RootRouter, req)
-				if route == nil {
+				theRoute, wildcardMap := calculateRoute(closure.RootRouter, req)
+
+				if theRoute == nil && httpMethod(req.Method) == httpMethodOptions {
+					methods := make([]string, 0, len(httpMethods))
+					var lastLeaf *pathLeaf
+					for _, method := range httpMethods {
+						if method == httpMethodOptions {
+							continue
+						}
+						tree := closure.RootRouter.root[method]
+						leaf, _ := tree.Match(req.URL.Path)
+						if leaf != nil {
+							methods = append(methods, string(method))
+							lastLeaf = leaf
+						}
+					}
+
+					if len(methods) > 0 {
+						handler := &actionHandler{Generic: true, GenericHandler: closure.RootRouter.genericOptionsHandler(closure.Contexts[0], methods)}
+						theRoute = &route{Method: httpMethodOptions, Path: lastLeaf.route.Path, Router: lastLeaf.route.Router, Handler: handler}
+					}
+				}
+
+				if theRoute == nil {
 					if closure.RootRouter.notFoundHandler.IsValid() {
 						invoke(closure.RootRouter.notFoundHandler, closure.Contexts[0], []reflect.Value{reflect.ValueOf(rw), reflect.ValueOf(req)})
 					} else {
@@ -84,11 +106,11 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 					return
 				}
 
-				closure.Routers = routersFor(route, closure.Routers)
+				closure.Routers = routersFor(theRoute, closure.Routers)
 				closure.Contexts = contextsFor(closure.Contexts, closure.Routers)
 
 				req.targetContext = closure.Contexts[len(closure.Contexts)-1]
-				req.route = route
+				req.route = theRoute
 				req.PathParams = wildcardMap
 			}
 
