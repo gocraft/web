@@ -324,10 +324,23 @@ func (c *Context) Error(rw web.ResponseWriter, r *web.Request, err interface{}) 
 We ship with three basic pieces of middleware: a logger, an exception printer, and a static file server. To use them:
 
 ```go
+currentRoot, _ := os.Getwd() //get current folder but you can place the folder you want to be static
+
 router := web.New(Context{})
 router.Middleware(web.LoggerMiddleware).
 	Middleware(web.ShowErrorsMiddleware).
-	Middleware(web.StaticMiddleware("public")) // "public" is a directory to serve files from.
+	Middleware(web.StaticMiddleware(currentRoot, web.StaticOption{Prefix: "/public"})) // "public" is a directory to serve files from.
+```
+
+If you want to select a file as index
+
+```go
+currentRoot, _ := os.Getwd() //get current folder but you can place the folder you want to be static
+
+router := web.New(Context{})
+router.Middleware(web.LoggerMiddleware).
+	Middleware(web.ShowErrorsMiddleware).
+	Middleware(web.StaticMiddleware(currentRoot, web.StaticOption{IndexFile: "index.html"})) // "index.html" is a file index in static folder
 ```
 
 NOTE: You might not want to use web.ShowErrorsMiddleware in production. You can easily do something like this:
