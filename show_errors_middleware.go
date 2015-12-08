@@ -176,7 +176,7 @@ const panicPageTpl string = `
       <pre class="stack">{{ .Stack }}</pre>
       <h2>Request</h2>
       <p><strong>Method:</strong> {{ .Method }}</p>
-      <h3>Paramenters:</h3>
+      <h3>Parameters:</h3>
       <ul>
         {{ range $key, $value := .Params }}
           <li><strong>{{ $key }}:</strong> {{ $value }}</li>
