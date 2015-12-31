@@ -56,18 +56,26 @@ func StaticMiddlewareFromDir(dir http.FileSystem, options ...StaticOption) func(
 			return
 		}
 
-		// Try to serve index
-		if option.IndexFile != "" && fi.IsDir() {
-			file = filepath.Join(file, option.IndexFile)
-			f, err = dir.Open(file)
-			if err != nil {
-				next(w, req)
-				return
-			}
-			defer f.Close()
+		// If the file is a directory, try to serve an index file.
+		// If no index is available, DO NOT serve the directory to avoid
+		// Content-Length issues. Simply skip to the next middleware, and return
+		// a 404 if no route with the same name is handled. 
+		if fi.IsDir() {
+			if option.IndexFile != "" {
+				file = filepath.Join(file, option.IndexFile)
+				f, err = dir.Open(file)
+				if err != nil {
+					next(w, req)
+					return
+				}
+				defer f.Close()
 
-			fi, err = f.Stat()
-			if err != nil || fi.IsDir() {
+				fi, err = f.Stat()
+				if err != nil || fi.IsDir() {
+					next(w, req)
+					return
+				}
+			} else {
 				next(w, req)
 				return
 			}
