@@ -395,10 +395,7 @@ func instructiveMessage(vfn reflect.Value, addingType string, yourType string, a
 
 // Both rootPath/childPath are like "/" and "/users"
 // Assumption is that both are well-formed paths.
+// Returns a path without a trailing "/" unless the overall path is just "/"
 func appendPath(rootPath, childPath string) string {
-	if rootPath == "/" {
-		return childPath
-	}
-
-	return rootPath + childPath
+	return strings.TrimRight(rootPath, "/") + "/" + strings.TrimLeft(childPath, "/")
 }
