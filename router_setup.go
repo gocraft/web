@@ -171,8 +171,8 @@ func (r *Router) NotFound(fn interface{}) *Router {
 	return r
 }
 
-// NotFound sets the specified function as the not-found handler (when no route matches) and returns the router.
-// Note that only the root router can have a NotFound handler.
+// OptionsHandler sets the specified function as the options handler and returns the router.
+// Note that only the root router can have a OptionsHandler handler.
 func (r *Router) OptionsHandler(fn interface{}) *Router {
 	if r.parent != nil {
 		panic("You can only set an OptionsHandler on the root router.")
