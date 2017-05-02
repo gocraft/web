@@ -331,7 +331,7 @@ router.Middleware(web.LoggerMiddleware).
 // The static middleware serves files. Examples:
 // "GET /" will serve an index file at pwd/public/index.html
 // "GET /robots.txt" will serve the file at pwd/public/robots.txt
-// "GET /images/foo.gif" will serve the fiel at pwd/public/images/foo.gif
+// "GET /images/foo.gif" will serve the file at pwd/public/images/foo.gif
 currentRoot, _ := os.Getwd()
 router.Middleware(web.StaticMiddleware(path.Join(currentRoot, "public"), web.StaticOption{IndexFile: "index.html"}))
 ```
