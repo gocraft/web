@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type httpMethod string
+type httpMethodss string
 
 const (
 	httpMethodGet     = httpMethod("GET")
