@@ -32,7 +32,7 @@ func (rootRouter *Router) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	closure.Routers = make([]*Router, 1, rootRouter.maxChildrenDepth)
 	closure.Routers[0] = rootRouter
 	closure.Contexts = make([]reflect.Value, 1, rootRouter.maxChildrenDepth)
-	closure.Contexts[0] = reflect.New(rootRouter.contextType)
+	closure.Contexts[0] = reflect.New(rootRouter.contextType.Type)
 	closure.currentMiddlewareLen = len(rootRouter.middleware)
 	closure.RootRouter = rootRouter
 	closure.Request.rootContext = closure.Contexts[0]
@@ -220,13 +220,39 @@ func contextsFor(contexts []reflect.Value, routers []*Router) []reflect.Value {
 
 	for i := 1; i < routersLen; i++ {
 		var ctx reflect.Value
-		if routers[i].contextType == routers[i-1].contextType {
+		if routers[i].contextType.Type == routers[i-1].contextType.Type {
 			ctx = contexts[i-1]
 		} else {
-			ctx = reflect.New(routers[i].contextType)
+			ctx = reflect.New(routers[i].contextType.Type)
 			// set the first field to the parent
-			f := reflect.Indirect(ctx).Field(0)
-			f.Set(contexts[i-1])
+			if routers[i].contextType.IsDerived {
+				childCtx := ctx
+				for {
+					f := reflect.Indirect(childCtx).Field(0)
+					if f.Type() != contexts[i-1].Type() && f.Kind() == reflect.Ptr {
+						childCtx = reflect.New(f.Type().Elem())
+						f.Set(childCtx)
+						continue
+					} else {
+						f.Set(contexts[i-1])
+						break
+					}
+				}
+			} else {
+				childCtx := contexts[i-1]
+				for {
+					f := reflect.Indirect(childCtx).Field(0)
+					if f.Type() == ctx.Type() {
+						if f.Kind() == reflect.Ptr {
+							f = f.Elem()
+						}
+						reflect.Indirect(ctx).Set(f)
+						break
+					}
+					childCtx = f
+
+				}
+			}
 		}
 		contexts = append(contexts, ctx)
 	}
@@ -253,9 +279,9 @@ func (rootRouter *Router) handlePanic(rw *appResponseWriter, req *Request, err i
 
 			// Need to set context to the next context, UNLESS the context is the same type.
 			curContextStruct := reflect.Indirect(context)
-			if targetRouter.contextType != curContextStruct.Type() {
+			if targetRouter.contextType.Type != curContextStruct.Type() {
 				context = curContextStruct.Field(0)
-				if reflect.Indirect(context).Type() != targetRouter.contextType {
+				if reflect.Indirect(context).Type() != targetRouter.contextType.Type {
 					panic("bug: shouldn't get here")
 				}
 			}

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"errors"
 	"reflect"
 	"strings"
 )
@@ -19,6 +20,11 @@ const (
 
 var httpMethods = []httpMethod{httpMethodGet, httpMethodPost, httpMethodPut, httpMethodDelete, httpMethodPatch, httpMethodHead, httpMethodOptions}
 
+type ContextSt struct {
+	Type      reflect.Type
+	IsDerived bool //true if it's drived from main route, false if main route is drived from it
+}
+
 // Router implements net/http's Handler interface and is what you attach middleware, routes/handlers, and subrouters to.
 type Router struct {
 	// Hierarchy:
@@ -27,7 +33,7 @@ type Router struct {
 	maxChildrenDepth int
 
 	// For each request we'll create one of these objects
-	contextType reflect.Type
+	contextType ContextSt
 
 	// Eg, "/" or "/admin". Any routes added to this router will be prefixed with this.
 	pathPrefix string
@@ -89,10 +95,10 @@ var emptyInterfaceType = reflect.TypeOf((*interface{})(nil)).Elem()
 // whose purpose is to communicate type information. On each request, an instance of this
 // context type will be automatically allocated and sent to handlers.
 func New(ctx interface{}) *Router {
-	validateContext(ctx, nil)
+	// validateContext(ctx, nil)
 
 	r := &Router{}
-	r.contextType = reflect.TypeOf(ctx)
+	r.contextType = ContextSt{Type: reflect.TypeOf(ctx)}
 	r.pathPrefix = "/"
 	r.maxChildrenDepth = 1
 	r.root = make(map[httpMethod]*pathNode)
@@ -116,10 +122,10 @@ func NewWithPrefix(ctx interface{}, pathPrefix string) *Router {
 // embed a pointer to the previous context in the first slot. You can also pass
 // a pathPrefix that each route will have. If "" is passed, then no path prefix is applied.
 func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
-	validateContext(ctx, r.contextType)
 
 	// Create new router, link up hierarchy
 	newRouter := &Router{parent: r}
+	newRouter.contextType = validateContext(ctx, r.contextType.Type)
 	r.children = append(r.children, newRouter)
 
 	// Increment maxChildrenDepth if this is the first child of the router
@@ -131,7 +137,6 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 		}
 	}
 
-	newRouter.contextType = reflect.TypeOf(ctx)
 	newRouter.pathPrefix = appendPath(r.pathPrefix, pathPrefix)
 	newRouter.root = r.root
 
@@ -141,7 +146,7 @@ func (r *Router) Subrouter(ctx interface{}, pathPrefix string) *Router {
 // Middleware adds the specified middleware tot he router and returns the router.
 func (r *Router) Middleware(fn interface{}) *Router {
 	vfn := reflect.ValueOf(fn)
-	validateMiddleware(vfn, r.contextType)
+	validateMiddleware(vfn, r.contextType.Type)
 	if vfn.Type().NumIn() == 3 {
 		r.middleware = append(r.middleware, &middlewareHandler{Generic: true, GenericMiddleware: fn.(func(ResponseWriter, *Request, NextMiddlewareFunc))})
 	} else {
@@ -154,7 +159,7 @@ func (r *Router) Middleware(fn interface{}) *Router {
 // Error sets the specified function as the error handler (when panics happen) and returns the router.
 func (r *Router) Error(fn interface{}) *Router {
 	vfn := reflect.ValueOf(fn)
-	validateErrorHandler(vfn, r.contextType)
+	validateErrorHandler(vfn, r.contextType.Type)
 	r.errorHandler = vfn
 	return r
 }
@@ -166,7 +171,7 @@ func (r *Router) NotFound(fn interface{}) *Router {
 		panic("You can only set a NotFoundHandler on the root router.")
 	}
 	vfn := reflect.ValueOf(fn)
-	validateNotFoundHandler(vfn, r.contextType)
+	validateNotFoundHandler(vfn, r.contextType.Type)
 	r.notFoundHandler = vfn
 	return r
 }
@@ -178,7 +183,7 @@ func (r *Router) OptionsHandler(fn interface{}) *Router {
 		panic("You can only set an OptionsHandler on the root router.")
 	}
 	vfn := reflect.ValueOf(fn)
-	validateOptionsHandler(vfn, r.contextType)
+	validateOptionsHandler(vfn, r.contextType.Type)
 	r.optionsHandler = vfn
 	return r
 }
@@ -220,7 +225,7 @@ func (r *Router) Options(path string, fn interface{}) *Router {
 
 func (r *Router) addRoute(method httpMethod, path string, fn interface{}) *Router {
 	vfn := reflect.ValueOf(fn)
-	validateHandler(vfn, r.contextType)
+	validateHandler(vfn, r.contextType.Type)
 	fullPath := appendPath(r.pathPrefix, path)
 	route := &route{Method: method, Path: fullPath, Router: r}
 	if vfn.Type().NumIn() == 2 {
@@ -250,25 +255,39 @@ func (r *Router) depth() int {
 //
 
 // Panics unless validation is correct
-func validateContext(ctx interface{}, parentCtxType reflect.Type) {
+func validateContext(ctx interface{}, parentCtxType reflect.Type) ContextSt {
+	doCheck := func(ctxType reflect.Type, parentCtxType reflect.Type) error {
+		for {
+			if ctxType.Kind() == reflect.Ptr {
+				ctxType = ctxType.Elem()
+			}
+			if ctxType.Kind() != reflect.Struct {
+				if ctxType == reflect.TypeOf(ctx) {
+					return errors.New("web: Context needs to be a struct type\n " + ctxType.String())
+				}
+				return errors.New("web: Context needs to have first field be a pointer to parent context\n" +
+					"Main Context: " + parentCtxType.String() + " Given Context: " + reflect.TypeOf(ctx).String())
+
+			}
+			if ctxType == parentCtxType {
+				break
+			}
+			if ctxType.NumField() == 0 {
+				return errors.New("web: Context needs to have first field be a pointer to parent context")
+			}
+			ctxType = ctxType.Field(0).Type
+		}
+		return nil
+	}
+
 	ctxType := reflect.TypeOf(ctx)
-
-	if ctxType.Kind() != reflect.Struct {
-		panic("web: Context needs to be a struct type")
-	}
-
-	if parentCtxType != nil && parentCtxType != ctxType {
-		if ctxType.NumField() == 0 {
-			panic("web: Context needs to have first field be a pointer to parent context")
+	if err1 := doCheck(ctxType, parentCtxType); err1 != nil {
+		if err2 := doCheck(parentCtxType, ctxType); err2 != nil {
+			panic(err1)
 		}
-
-		fldType := ctxType.Field(0).Type
-
-		// Ensure fld is a pointer to parentCtxType
-		if fldType != reflect.PtrTo(parentCtxType) {
-			panic("web: Context needs to have first field be a pointer to parent context")
-		}
+		return ContextSt{ctxType, false}
 	}
+	return ContextSt{ctxType, true}
 }
 
 // Panics unless fn is a proper handler wrt ctxType
