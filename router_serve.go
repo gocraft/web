@@ -76,6 +76,7 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 				theRoute, wildcardMap := calculateRoute(closure.RootRouter, req)
 
 				if theRoute == nil && httpMethod(req.Method) == httpMethodOptions {
+					optionsMethod := req.Header.Get("Access-Control-Request-Method")
 					methods := make([]string, 0, len(httpMethods))
 					var lastLeaf *pathLeaf
 					for _, method := range httpMethods {
@@ -83,10 +84,13 @@ func middlewareStack(closure *middlewareClosure) NextMiddlewareFunc {
 							continue
 						}
 						tree := closure.RootRouter.root[method]
-						leaf, _ := tree.Match(req.URL.Path)
+						leaf, wildcards := tree.Match(req.URL.Path)
 						if leaf != nil {
 							methods = append(methods, string(method))
 							lastLeaf = leaf
+							if optionsMethod == string(method) {
+								wildcardMap = wildcards
+							}
 						}
 					}
 
