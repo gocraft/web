@@ -2,6 +2,7 @@ package web
 
 import (
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -14,7 +15,7 @@ type pathNode struct {
 	wildcard *pathNode
 
 	// If set, and we have nothing left to match, then we match on this node
-	leaves []*pathLeaf
+	leaves pathLeafPtrSlice
 
 	// If true, this pathNode has a pathparam that matches the rest of the path
 	matchesFullPath bool
@@ -43,6 +44,9 @@ type pathLeaf struct {
 
 	// If true, this leaf has a pathparam that matches the rest of the path
 	matchesFullPath bool
+
+	// If true, there are no regexp groups in this leaf
+	hasGroupMatches bool
 }
 
 func newPathNode() *pathNode {
@@ -56,10 +60,13 @@ func (pn *pathNode) add(path string, route *route) {
 func (pn *pathNode) addInternal(segments []string, route *route, wildcards []string, regexps []*regexp.Regexp) {
 	if len(segments) == 0 {
 		allNilRegexps := true
+		hasGroupMatches := false
 		for _, r := range regexps {
 			if r != nil {
 				allNilRegexps = false
-				break
+				if r.NumSubexp() > 0 {
+					hasGroupMatches = true
+				}
 			}
 		}
 		if allNilRegexps {
@@ -71,7 +78,8 @@ func (pn *pathNode) addInternal(segments []string, route *route, wildcards []str
 			matchesFullPath = wildcards[len(wildcards)-1] == "*"
 		}
 
-		pn.leaves = append(pn.leaves, &pathLeaf{route: route, wildcards: wildcards, regexps: regexps, matchesFullPath: matchesFullPath})
+		pn.leaves = append(pn.leaves, &pathLeaf{route: route, wildcards: wildcards, regexps: regexps, matchesFullPath: matchesFullPath, hasGroupMatches: hasGroupMatches})
+		sort.Stable(pn.leaves)
 	} else { // len(segments) >= 1
 		seg := segments[0]
 		wc, wcName, wcRegexpStr := isWildcard(seg)
@@ -95,6 +103,23 @@ func (pn *pathNode) addInternal(segments []string, route *route, wildcards []str
 			subPn.addInternal(segments[1:], route, wildcards, regexps)
 		}
 	}
+}
+
+// A slice of path leafs that supports sorting via the sort.Interface interface.
+type pathLeafPtrSlice []*pathLeaf
+
+func (this pathLeafPtrSlice) Len() int {
+	return len(this)
+}
+
+func (this pathLeafPtrSlice) Less(i, j int) bool {
+	// If there are more regexp patterns to match, then we're less. We want the
+	// ones with regexps to be checked first.
+	return len(this[i].regexps) > len(this[j].regexps)
+}
+
+func (this pathLeafPtrSlice) Swap(i, j int) {
+	this[i], this[j] = this[j], this[i]
 }
 
 func (pn *pathNode) Match(path string) (leaf *pathLeaf, wildcards map[string]string) {
@@ -161,13 +186,45 @@ func (leaf *pathLeaf) match(wildcardValues []string) bool {
 		panic("bug: invariant violated")
 	}
 
-	for i, r := range leaf.regexps {
-		if r != nil {
-			if !r.MatchString(wildcardValues[i]) {
-				return false
+	if leaf.hasGroupMatches {
+		// Find all the match groups
+		l := len(wildcardValues)
+		matchedGroups := make([]string, l)
+		for i, r := range leaf.regexps {
+			if r != nil {
+				// If there are no groups, check a simple match.
+				if r.NumSubexp() == 0 {
+					if !r.MatchString(wildcardValues[i]) {
+						return false
+					} else {
+						matchedGroups[i] = wildcardValues[i]
+					}
+				} else {
+					// Otherwise, there is a group. If we match, use the first group.
+					match := r.FindStringSubmatch(wildcardValues[i])
+					if match != nil {
+						matchedGroups[i] = match[1]
+					} else {
+						return false
+					}
+				}
+			}
+		}
+
+		// If we made it this far, set our values in.
+		for n := 0; n < l; n++ {
+			wildcardValues[n] = matchedGroups[n]
+		}
+	} else {
+		for i, r := range leaf.regexps {
+			if r != nil {
+				if !r.MatchString(wildcardValues[i]) {
+					return false
+				}
 			}
 		}
 	}
+
 	return true
 }
 
