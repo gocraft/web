@@ -316,7 +316,7 @@ Your handler can optionally accept a pointer to its corresponding context. Error
 ```go
 func (c *Context) Error(rw web.ResponseWriter, r *web.Request, err interface{}) {
 	rw.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprint(w, "Error", err)
+	fmt.Fprint(rw, "Error", err)
 }
 ```
 
