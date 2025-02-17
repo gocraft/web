@@ -164,6 +164,34 @@ func (r *Router) AllFullRoutes() []string {
 	return uniqueAllRoutes
 }
 
+func (r *Router) AllFullRoutesWithMethods() []string {
+	if r.parent != nil {
+		panic("You can only call AllFullRoutesWithMethods() on the root router.")
+	}
+
+	var allRoutes []string
+	var traverse func(router *Router)
+	traverse = func(router *Router) {
+		for _, route := range router.routes {
+			allRoutes = append(allRoutes, route.Path+" "+string(route.Method))
+		}
+		for _, child := range router.children {
+			traverse(child)
+		}
+	}
+	traverse(r)
+
+	sort.Strings(allRoutes)
+
+	uniqueAllRoutes := allRoutes[:0]
+	for i, r := range allRoutes {
+		if i == 0 || r != allRoutes[i-1] {
+			uniqueAllRoutes = append(uniqueAllRoutes, r)
+		}
+	}
+	return uniqueAllRoutes
+}
+
 // Subrouter attaches a new subrouter to the specified router and returns it.
 // You can use the same context or pass a new one. If you pass a new one, it must
 // embed a pointer to the previous context in the first slot. You can also pass
